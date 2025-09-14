@@ -48,6 +48,46 @@ export const useGroupChat = () => {
     }
   }, [user]);
 
+  // Log chat message function
+  const logChatMessage = useCallback(async (
+    prompt: string,
+    response: string,
+    conversationId: string | null,
+    responseTime: number,
+    tokensUsed: any,
+    model: string | null,
+    toolsUsed: any[],
+    metadata: any,
+    visualization: boolean,
+    mode: string
+  ): Promise<string> => {
+    try {
+      const { data, error } = await supabase
+        .from('astra_chats')
+        .insert({
+          user_id: user?.id,
+          prompt,
+          response,
+          conversation_id: conversationId,
+          response_time: responseTime,
+          tokens_used: tokensUsed,
+          model,
+          tools_used: toolsUsed,
+          metadata,
+          visualization,
+          mode
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data.id;
+    } catch (err) {
+      console.error('Error logging chat message:', err);
+      throw err;
+    }
+  }, [user]);
+
   // Send a group message
   const sendMessage = useCallback(async (content: string) => {
     if (!user || !content.trim()) return;
@@ -163,98 +203,15 @@ export const useGroupChat = () => {
       setError('Failed to send message');
     }
   }, [user, parseMentions, getUserName, logChatMessage]);
-              'n8n-workflow', // Model used
-              undefined, // Tools used
-              { 
-                team_message_id: astraData.id, 
-                asked_by_user_name: userName,
-                original_user_message_id: data.id 
-              }, // Metadata
-              false, // Visualization
-              'team' // Mode
-            );
-            
-            // Immediately add Astra's response to local state
-            setMessages(prev => [...prev, astraData]);
-          }
-        } catch (err) {
-          console.error('Error getting Astra response:', err);
-          
-          // Send error message
-          const errorMessageData: GroupMessageInsert = {
-            user_id: user.id,
-            user_name: 'Astra',
-            user_email: 'astra@rockethub.com',
-            message_content: "I'm sorry, I'm having trouble connecting right now. Please try again in a moment.",
-            message_type: 'astra',
-            mentions: [],
-            astra_prompt: content.replace(/@astra\s*/i, '').trim(),
-          };
-
-          const { data: errorData } = await supabase
-            .from('group_messages')
-            .insert(errorMessageData)
-            .select()
-            .single();
-
-          if (errorData) {
-            // Log error response to astra_chats table
-            await logChatMessage(
-              content.replace(/@astra\s*/i, '').trim(),
-              "I'm sorry, I'm having trouble connecting right now. Please try again in a moment.",
-              undefined, // No conversation ID for team chat
-              undefined, // Response time
-              undefined, // Tokens used
-              'n8n-workflow', // Model used
-              undefined, // Tools used
-              { 
-                team_message_id: errorData.id, 
-                asked_by_user_name: userName,
-                original_user_message_id: data.id,
-                error: true 
-              }, // Metadata
-              false, // Visualization
-              'team' // Mode
-            );
-            
-            // Immediately add error message to local state
-            setMessages(prev => [...prev, errorData]);
-          }
-        } finally {
-          setIsAstraThinking(false);
-        }
-      }
-    } catch (err) {
-      console.error('Error in sendMessage:', err);
-      setError('Failed to send message');
-    }
-  }, [user, parseMentions, getUserName]);
 
   // Fetch message history
   const fetchMessages = useCallback(async (limit: number = 50) => {
     try {
       setLoading(true);
       
-      // Fetch from astra_chats table where mode = 'team'
       const { data, error } = await supabase
-        .from('astra_chats')
-        .select(`
-          id,
-          user_id,
-          user_name,
-          user_email,
-          prompt,
-          response,
-          message_type,
-          mentions,
-          astra_prompt,
-          visualization_data,
-          metadata,
-          created_at,
-          updated_at,
-          is_team_response
-        `)
-        .eq('mode', 'team')
+        .from('group_messages')
+        .select('*')
         .order('created_at', { ascending: true })
         .limit(limit);
 
@@ -264,23 +221,7 @@ export const useGroupChat = () => {
         return;
       }
 
-      // Transform astra_chats data to GroupMessage format
-      const transformedMessages: GroupMessage[] = (data || []).map(chat => ({
-        id: chat.id,
-        user_id: chat.user_id,
-        user_name: chat.user_name,
-        user_email: chat.user_email,
-        message_content: chat.is_team_response ? chat.response : chat.prompt,
-        message_type: chat.message_type as 'user' | 'astra' | 'system',
-        mentions: chat.mentions || [],
-        astra_prompt: chat.astra_prompt,
-        visualization_data: chat.visualization_data,
-        metadata: chat.metadata || {},
-        created_at: chat.created_at,
-        updated_at: chat.updated_at
-      }));
-
-      setMessages(transformedMessages);
+      setMessages(data || []);
     } catch (err) {
       console.error('Error in fetchMessages:', err);
       setError('Failed to load messages');
@@ -293,25 +234,9 @@ export const useGroupChat = () => {
   const searchMessages = useCallback(async (query: string): Promise<GroupMessage[]> => {
     try {
       const { data, error } = await supabase
-        .from('astra_chats')
-        .select(`
-          id,
-          user_id,
-          user_name,
-          user_email,
-          prompt,
-          response,
-          message_type,
-          mentions,
-          astra_prompt,
-          visualization_data,
-          metadata,
-          created_at,
-          updated_at,
-          is_team_response
-        `)
-        .eq('mode', 'team')
-        .or(`prompt.ilike.%${query}%,response.ilike.%${query}%,user_name.ilike.%${query}%`)
+        .from('group_messages')
+        .select('*')
+        .or(`message_content.ilike.%${query}%,user_name.ilike.%${query}%`)
         .order('created_at', { ascending: false })
         .limit(100);
 
@@ -320,23 +245,7 @@ export const useGroupChat = () => {
         return [];
       }
 
-      // Transform astra_chats data to GroupMessage format
-      const transformedMessages: GroupMessage[] = (data || []).map(chat => ({
-        id: chat.id,
-        user_id: chat.user_id,
-        user_name: chat.user_name,
-        user_email: chat.user_email,
-        message_content: chat.is_team_response ? chat.response : chat.prompt,
-        message_type: chat.message_type as 'user' | 'astra' | 'system',
-        mentions: chat.mentions || [],
-        astra_prompt: chat.astra_prompt,
-        visualization_data: chat.visualization_data,
-        metadata: chat.metadata || {},
-        created_at: chat.created_at,
-        updated_at: chat.updated_at
-      }));
-
-      return transformedMessages;
+      return data || [];
     } catch (err) {
       console.error('Error in searchMessages:', err);
       return [];
@@ -347,7 +256,7 @@ export const useGroupChat = () => {
   const updateVisualizationData = useCallback(async (messageId: string, visualizationData: string) => {
     try {
       const { error } = await supabase
-        .from('astra_chats')
+        .from('group_messages')
         .update({ visualization_data: visualizationData })
         .eq('id', messageId);
 
@@ -372,37 +281,21 @@ export const useGroupChat = () => {
     if (!user) return;
 
     const channel = supabase
-      .channel('astra_chats_team')
+      .channel('group_messages')
       .on('postgres_changes', {
         event: 'INSERT',
         schema: 'public',
-        table: 'astra_chats',
-        filter: 'mode=eq.team'
+        table: 'group_messages'
       }, (payload) => {
-        const newChat = payload.new as any;
-        // Transform and add new message
+        const newMessage = payload.new as GroupMessageRow;
+        // Only add message if it's not already in our local state
+        // (to avoid duplicates from our own messages)
         setMessages(prev => {
-          const messageExists = prev.some(msg => msg.id === newChat.id);
+          const messageExists = prev.some(msg => msg.id === newMessage.id);
           if (messageExists) {
             return prev;
           }
-          
-          const transformedMessage: GroupMessage = {
-            id: newChat.id,
-            user_id: newChat.user_id,
-            user_name: newChat.user_name,
-            user_email: newChat.user_email,
-            message_content: newChat.is_team_response ? newChat.response : newChat.prompt,
-            message_type: newChat.message_type,
-            mentions: newChat.mentions || [],
-            astra_prompt: newChat.astra_prompt,
-            visualization_data: newChat.visualization_data,
-            metadata: newChat.metadata || {},
-            created_at: newChat.created_at,
-            updated_at: newChat.updated_at
-          };
-          
-          return [...prev, transformedMessage];
+          return [...prev, newMessage];
         });
       })
       .subscribe();
