@@ -161,9 +161,22 @@ export const useChat = () => {
 
       // Log the chat message to database
       try {
+        // Log user message
+        await logChatMessage(
+          text.trim(),
+          true, // isUser
+          currentConversationId || undefined,
+          0, // No response time for user messages
+          {},
+          undefined,
+          [],
+          { request_time: requestStartTime }
+        );
+        
+        // Log Astra response
         const chatId = await logChatMessage(
-          text.trim(), 
-          messageText, 
+          messageText,
+          false, // isUser (Astra response)
           currentConversationId || undefined,
           responseTimeMs,
           tokensUsed,

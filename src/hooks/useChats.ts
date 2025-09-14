@@ -16,8 +16,8 @@ export interface Conversation {
 
 export interface ChatMessage {
   id: string;
-  prompt: string;
-  response: string;
+  message: string;
+  isUser: boolean;
   createdAt: string;
 }
 
@@ -69,8 +69,8 @@ export const useChats = () => {
 
   // Log a chat message to the database
   const logChatMessage = useCallback(async (
-    prompt: string,
-    response: string,
+    message: string,
+    isUser: boolean,
     conversationId?: string,
     responseTimeMs?: number,
     tokensUsed?: any,
@@ -89,12 +89,18 @@ export const useChats = () => {
                       user.email?.split('@')[0] || 
                       'Unknown User';
       
+      const userEmail = isUser ? (user.email || '') : 'astra@rockethub.ai';
+      const displayName = isUser ? userName : 'Astra';
+      const messageType = isUser ? 'user' : 'astra';
+      
       const chatData: ChatInsert = {
         user_id: user.id,
-        user_email: user.email || '',
-        user_name: userName,
-        prompt,
-        response,
+        user_email: userEmail,
+        user_name: displayName,
+        message,
+        prompt: isUser ? message : '', // Keep for backward compatibility
+        response: isUser ? '' : message, // Keep for backward compatibility
+        message_type: messageType,
         conversation_id: chatConversationId,
         session_id: user.id, // Using user ID as session ID for simplicity
         response_time_ms: responseTimeMs || 0,
@@ -103,7 +109,7 @@ export const useChats = () => {
         tools_used: toolsUsed || [],
         metadata: metadata || {},
         visualization: visualization || false,
-        mode: mode
+        mode: mode || 'private'
       };
 
       const { data, error } = await supabase
@@ -244,8 +250,8 @@ export const useChats = () => {
 
       const messages: ChatMessage[] = data.map(chat => ({
         id: chat.id,
-        prompt: chat.prompt,
-        response: chat.response,
+        message: chat.message,
+        isUser: chat.message_type === 'user',
         createdAt: chat.created_at,
       }));
 

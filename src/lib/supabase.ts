@@ -24,6 +24,7 @@ export type Database = {
           user_id: string;
           user_email: string;
           user_name: string;
+         message: string;
           prompt: string;
           response: string;
           conversation_id: string | null;
@@ -48,6 +49,7 @@ export type Database = {
           user_id: string;
           user_email: string;
           user_name: string;
+         message: string;
           prompt: string;
           response: string;
           conversation_id?: string | null;
@@ -72,6 +74,7 @@ export type Database = {
           user_id?: string;
           user_email?: string;
           user_name?: string;
+         message?: string;
           prompt?: string;
           response?: string;
           conversation_id?: string | null;

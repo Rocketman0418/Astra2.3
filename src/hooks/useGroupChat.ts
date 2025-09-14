@@ -177,16 +177,14 @@ export const useGroupChat = () => {
           user_id,
           user_name,
           user_email,
-          prompt,
-          response,
+          message,
           message_type,
           mentions,
           astra_prompt,
           visualization_data,
           metadata,
           created_at,
-          updated_at,
-          is_team_response
+          updated_at
         `)
         .eq('mode', 'team')
         .order('created_at', { ascending: true })
