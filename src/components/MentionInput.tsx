@@ -35,7 +35,7 @@ export const MentionInput: React.FC<MentionInputProps> = ({
 
   // Add Astra to the users list
   const allUsers = [
-    { id: 'astra', name: 'Astra', email: 'astra@rockethub.com' },
+    { id: 'astra', name: 'Astra', email: 'astra@rockethub.ai' },
     ...users
   ];
 
