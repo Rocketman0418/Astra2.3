@@ -38,6 +38,9 @@ export const GroupChat: React.FC<GroupChatProps> = ({ showSearch = false, showMe
   const [searchResults, setSearchResults] = useState<GroupMessageType[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [visualizationStates, setVisualizationStates] = useState<Record<string, any>>({});
+  const [showSummaryOptions, setShowSummaryOptions] = useState(false);
+  const [isSummarizing, setIsSummarizing] = useState(false);
+  const [summaryResult, setSummaryResult] = useState<string | null>(null);
 
   const {
     messages,
@@ -70,6 +73,89 @@ export const GroupChat: React.FC<GroupChatProps> = ({ showSearch = false, showMe
       setSearchResults([]);
     }
   }, [searchMessages]);
+
+  // Handle chat summary request
+  const handleSummaryRequest = useCallback(async (period: '24 Hours' | '7 Days' | '30 Days') => {
+    if (!user) return;
+    
+    setIsSummarizing(true);
+    setShowSummaryOptions(false);
+    setSummaryResult(null);
+    
+    const promptMap = {
+      '24 Hours': 'Summarize team chat from last 24 hours',
+      '7 Days': 'Summarize team chat from last 7 days', 
+      '30 Days': 'Summarize team chat from last 30 days'
+    };
+    
+    const prompt = promptMap[period];
+    
+    try {
+      const userName = await getUserName();
+      
+      const response = await fetch('https://healthrocket.app.n8n.cloud/webhook/8ec404be-7f51-47c8-8faf-0d139bd4c5e9/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          chatInput: prompt,
+          user_id: user.id,
+          user_email: user.email || '',
+          user_name: userName,
+          conversation_id: null,
+          mode: 'team',
+          original_message: prompt,
+          mentions: []
+        })
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to get summary');
+      }
+      
+      const responseText = await response.text();
+      let summaryText = responseText;
+      
+      // Try to parse JSON response
+      try {
+        const jsonResponse = JSON.parse(responseText);
+        if (jsonResponse.output) {
+          summaryText = jsonResponse.output;
+        }
+      } catch (e) {
+        // Use raw text if not JSON
+      }
+      
+      setSummaryResult(summaryText);
+    } catch (error) {
+      console.error('Error getting chat summary:', error);
+      setSummaryResult("I'm sorry, I'm having trouble generating the summary right now. Please try again in a moment.");
+    } finally {
+      setIsSummarizing(false);
+    }
+  }, [user]);
+
+  // Get user's display name
+  const getUserName = useCallback(async (): Promise<string> => {
+    if (!user) return 'Unknown User';
+
+    try {
+      const { data, error } = await supabase
+        .from('users')
+        .select('name')
+        .eq('id', user.id)
+        .single();
+
+      if (error || !data?.name) {
+        return user.email?.split('@')[0] || 'Unknown User';
+      }
+
+      return data.name;
+    } catch (err) {
+      return user.email?.split('@')[0] || 'Unknown User';
+    }
+  }, [user]);
 
   // Fetch users for mentions
   useEffect(() => {
@@ -301,6 +387,53 @@ export const GroupChat: React.FC<GroupChatProps> = ({ showSearch = false, showMe
               </button>
             </div>
 
+            {/* Summarize Chat Button */}
+            <div className="mb-4">
+              <div className="relative">
+                <button
+                  onClick={() => setShowSummaryOptions(!showSummaryOptions)}
+                  disabled={isSummarizing}
+                  className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 disabled:from-gray-600 disabled:to-gray-700 text-white font-medium py-2 px-4 rounded-lg transition-all duration-200 flex items-center justify-center space-x-2 disabled:cursor-not-allowed"
+                >
+                  {isSummarizing ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      <span>Generating Summary...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>📊</span>
+                      <span>Summarize Chat</span>
+                    </>
+                  )}
+                </button>
+                
+                {/* Summary Options Dropdown */}
+                {showSummaryOptions && !isSummarizing && (
+                  <div className="absolute top-full left-0 right-0 mt-2 bg-gray-700 rounded-lg shadow-lg border border-gray-600 overflow-hidden z-10">
+                    <button
+                      onClick={() => handleSummaryRequest('24 Hours')}
+                      className="w-full text-left px-4 py-3 hover:bg-gray-600 transition-colors text-white text-sm"
+                    >
+                      Last 24 Hours
+                    </button>
+                    <button
+                      onClick={() => handleSummaryRequest('7 Days')}
+                      className="w-full text-left px-4 py-3 hover:bg-gray-600 transition-colors text-white text-sm border-t border-gray-600"
+                    >
+                      Last 7 Days
+                    </button>
+                    <button
+                      onClick={() => handleSummaryRequest('30 Days')}
+                      className="w-full text-left px-4 py-3 hover:bg-gray-600 transition-colors text-white text-sm border-t border-gray-600"
+                    >
+                      Last 30 Days
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
               <input
@@ -314,6 +447,34 @@ export const GroupChat: React.FC<GroupChatProps> = ({ showSearch = false, showMe
           </div>
 
           <div className="flex-1 overflow-y-auto">
+            {/* Summary Result */}
+            {summaryResult && (
+              <div className="p-4 border-b border-gray-600">
+                <div className="flex items-start space-x-3 mb-4">
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center text-sm">
+                    🚀
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center space-x-2 mb-2">
+                      <span className="text-blue-300 text-sm font-medium">Astra</span>
+                      <span className="text-gray-500 text-xs">Chat Summary</span>
+                    </div>
+                    <div className="bg-gradient-to-br from-gray-700 to-gray-800 text-white rounded-2xl px-4 py-3 border border-blue-500/20">
+                      <div className="break-words text-sm leading-relaxed">
+                        <div className="whitespace-pre-wrap text-gray-300">{summaryResult}</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setSummaryResult(null)}
+                  className="text-xs text-gray-400 hover:text-gray-300 underline"
+                >
+                  Clear Summary
+                </button>
+              </div>
+            )}
+            
             {isSearching ? (
               <div className="p-4 text-center">
                 <div className="w-6 h-6 border-2 border-blue-500/30 border-t-blue-500 rounded-full animate-spin mx-auto" />
