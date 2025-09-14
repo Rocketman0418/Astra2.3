@@ -1,0 +1,41 @@
+{
+  "name": "Astra Intelligence",
+  "short_name": "Astra",
+  "description": "RocketHub team chat tool for company information queries",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#111827",
+  "theme_color": "#2563eb",
+  "icons": [
+    {
+      "src": "/RocketHub Favicon.png",
+      "sizes": "any",
+      "type": "image/png"
+    },
+    {
+      "src": "/RocketHub Favicon.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/RocketHub Favicon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/RocketHub Favicon.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/RocketHub Favicon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "categories": ["productivity", "business"],
+  "prefer_related_applications": false
+}
