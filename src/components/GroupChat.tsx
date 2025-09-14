@@ -195,6 +195,23 @@ export const GroupChat: React.FC<GroupChatProps> = ({ showSearch = false, showMe
     console.log('❌ No visualization data found for message:', messageId);
   }, [showVisualization, getVisualization]);
 
+  // Scroll to a specific message
+  const scrollToMessage = useCallback((messageId: string) => {
+    const messageElement = document.getElementById(`message-${messageId}`);
+    if (messageElement) {
+      // Scroll to the message
+      messageElement.scrollIntoView({ 
+        behavior: 'smooth', 
+        block: 'center' 
+      });
+      
+      // Highlight the message briefly
+      messageElement.classList.add('message-highlight');
+      setTimeout(() => {
+        messageElement.classList.remove('message-highlight');
+      }, 3000);
+    }
+  }, []);
   // Get visualization state for a message
   const getVisualizationState = (messageId: string) => {
     // First check local state (most up-to-date)
@@ -318,7 +335,8 @@ export const GroupChat: React.FC<GroupChatProps> = ({ showSearch = false, showMe
                 {searchResults.map((message) => (
                   <div
                     key={message.id}
-                    className="p-3 rounded-lg cursor-pointer transition-all duration-200 mb-2 hover:bg-gray-700/50"
+                    onClick={() => scrollToMessage(message.id)}
+                    className="p-3 rounded-lg cursor-pointer transition-all duration-200 mb-2 hover:bg-gray-700/50 hover:border hover:border-blue-500/30"
                   >
                     <div className="flex items-start space-x-3">
                       <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
