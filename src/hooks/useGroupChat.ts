@@ -50,6 +50,63 @@ export const useGroupChat = () => {
     }
   }, [user]);
 
+  // Fetch message history
+  const fetchMessages = useCallback(async (limit: number = 50) => {
+    try {
+      setLoading(true);
+      
+      // Fetch from astra_chats table where mode = 'team'
+      const { data, error } = await supabase
+        .from('astra_chats')
+        .select(`
+          id,
+          user_id,
+          user_name,
+          user_email,
+          message,
+          message_type,
+          mentions,
+          astra_prompt,
+          visualization_data,
+          metadata,
+          created_at,
+          updated_at
+        `)
+        .eq('mode', 'team')
+        .order('created_at', { ascending: true })
+        .limit(limit);
+
+      if (error) {
+        console.error('Error fetching messages:', error);
+        setError('Failed to load messages');
+        return;
+      }
+
+      // Transform astra_chats data to GroupMessage format
+      const transformedMessages: GroupMessage[] = (data || []).map(chat => ({
+        id: chat.id,
+        user_id: chat.user_id,
+        user_name: chat.user_name,
+        user_email: chat.user_email,
+        message_content: chat.message,
+        message_type: chat.message_type as 'user' | 'astra' | 'system',
+        mentions: chat.mentions || [],
+        astra_prompt: chat.astra_prompt,
+        visualization_data: chat.visualization_data,
+        metadata: chat.metadata || {},
+        created_at: chat.created_at,
+        updated_at: chat.updated_at
+      }));
+
+      setMessages(transformedMessages);
+    } catch (err) {
+      console.error('Error in fetchMessages:', err);
+      setError('Failed to load messages');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   // Send a group message
   const sendMessage = useCallback(async (content: string) => {
     if (!user || !content.trim()) return;
@@ -176,63 +233,6 @@ export const useGroupChat = () => {
       setError('Failed to send message');
     }
   }, [user, parseMentions, getUserName, logChatMessage, fetchMessages]);
-
-  // Fetch message history
-  const fetchMessages = useCallback(async (limit: number = 50) => {
-    try {
-      setLoading(true);
-      
-      // Fetch from astra_chats table where mode = 'team'
-      const { data, error } = await supabase
-        .from('astra_chats')
-        .select(`
-          id,
-          user_id,
-          user_name,
-          user_email,
-          message,
-          message_type,
-          mentions,
-          astra_prompt,
-          visualization_data,
-          metadata,
-          created_at,
-          updated_at
-        `)
-        .eq('mode', 'team')
-        .order('created_at', { ascending: true })
-        .limit(limit);
-
-      if (error) {
-        console.error('Error fetching messages:', error);
-        setError('Failed to load messages');
-        return;
-      }
-
-      // Transform astra_chats data to GroupMessage format
-      const transformedMessages: GroupMessage[] = (data || []).map(chat => ({
-        id: chat.id,
-        user_id: chat.user_id,
-        user_name: chat.user_name,
-        user_email: chat.user_email,
-        message_content: chat.message,
-        message_type: chat.message_type as 'user' | 'astra' | 'system',
-        mentions: chat.mentions || [],
-        astra_prompt: chat.astra_prompt,
-        visualization_data: chat.visualization_data,
-        metadata: chat.metadata || {},
-        created_at: chat.created_at,
-        updated_at: chat.updated_at
-      }));
-
-      setMessages(transformedMessages);
-    } catch (err) {
-      console.error('Error in fetchMessages:', err);
-      setError('Failed to load messages');
-    } finally {
-      setLoading(false);
-    }
-  }, []);
 
   // Search messages
   const searchMessages = useCallback(async (query: string): Promise<GroupMessage[]> => {
