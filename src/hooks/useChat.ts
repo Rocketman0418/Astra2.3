@@ -169,14 +169,12 @@ export const useChat = () => {
           0, // No response time for user messages
           {},
           undefined,
-          [],
           { request_time: requestStartTime },
           false, // visualization
           'private', // mode
           [], // mentions
           undefined, // astraPrompt
-          undefined, // visualizationData
-          false // isTeamResponse
+          undefined // visualizationData
         );
         
         // Log Astra response
@@ -187,7 +185,6 @@ export const useChat = () => {
           responseTimeMs,
           tokensUsed,
           metadata.model_used || 'n8n-workflow',
-          toolsUsed,
           {
             ...metadata,
             request_time: requestStartTime,
@@ -198,8 +195,7 @@ export const useChat = () => {
           'private', // mode
           [], // mentions
           text.trim(), // astraPrompt (original user question)
-          undefined, // visualizationData
-          false // isTeamResponse
+          undefined // visualizationData
         );
         
         // Store the chat ID in the message for later visualization tracking

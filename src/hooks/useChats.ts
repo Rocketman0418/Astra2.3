@@ -150,14 +150,12 @@ export const useChats = () => {
     responseTimeMs?: number,
     tokensUsed?: any,
     modelUsed?: string,
-    toolsUsed?: string[],
     metadata?: any,
     visualization?: boolean,
     mode?: 'private' | 'team',
     mentions?: string[],
     astraPrompt?: string,
-    visualizationData?: string,
-    isTeamResponse?: boolean
+    visualizationData?: string
   ): Promise<string | null> => {
     if (!user) return null;
 
@@ -182,18 +180,15 @@ export const useChats = () => {
         response: isUser ? '' : message, // Keep for backward compatibility
         message_type: messageType,
         conversation_id: chatConversationId,
-        session_id: user.id, // Using user ID as session ID for simplicity
         response_time_ms: responseTimeMs || 0,
         tokens_used: tokensUsed || {},
         model_used: modelUsed || 'n8n-workflow',
-        tools_used: toolsUsed || [],
         metadata: metadata || {},
         visualization: visualization || false,
         mode: mode || 'private',
         mentions: mentions || [],
         astra_prompt: astraPrompt,
-        visualization_data: visualizationData,
-        is_team_response: isTeamResponse || false
+        visualization_data: visualizationData
       };
 
       const { data, error } = await supabase

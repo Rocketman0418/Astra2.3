@@ -124,7 +124,6 @@ export const useGroupChat = () => {
         0, // No response time for user messages
         {}, // No tokens used
         null, // No model used for user messages
-        [], // No tools used
         { 
           team_chat: true,
           message_type: 'user'
@@ -133,8 +132,7 @@ export const useGroupChat = () => {
         'team', // mode
         mentions, // mentions
         undefined, // astraPrompt
-        undefined, // visualizationData
-        false // isTeamResponse
+        undefined // visualizationData
       );
 
       // If @astra was mentioned, get AI response
@@ -181,7 +179,6 @@ export const useGroupChat = () => {
             responseTimeMs, // Response time
             {}, // Tokens used - could be extracted from response
             'n8n-workflow', // Model used
-            [], // Tools used
             { 
               team_chat: true,
               message_type: 'astra',
@@ -192,8 +189,7 @@ export const useGroupChat = () => {
             'team', // mode
             [], // mentions (Astra doesn't mention anyone)
             astraPrompt, // astraPrompt
-            undefined, // visualizationData
-            true // isTeamResponse
+            undefined // visualizationData
           );
         } catch (err) {
           console.error('Error getting Astra response:', err);
@@ -206,7 +202,6 @@ export const useGroupChat = () => {
             0, // No response time for errors
             {}, // No tokens used
             'n8n-workflow', // Model used
-            [], // No tools used
             { 
               team_chat: true,
               message_type: 'astra',
@@ -218,8 +213,7 @@ export const useGroupChat = () => {
             'team', // mode
             [], // mentions
             content.replace(/@astra\s*/i, '').trim(), // astraPrompt
-            undefined, // visualizationData
-            true // isTeamResponse
+            undefined // visualizationData
           );
         } finally {
           setIsAstraThinking(false);
