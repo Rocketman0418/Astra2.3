@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { supabase, Database } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
+import { useChats } from './useChats';
 import { GroupMessage } from '../types';
 
 type GroupMessageRow = Database['public']['Tables']['group_messages']['Row'];
@@ -10,6 +11,7 @@ const WEBHOOK_URL = 'https://healthrocket.app.n8n.cloud/webhook/8ec404be-7f51-47
 
 export const useGroupChat = () => {
   const { user } = useAuth();
+  const { logChatMessage } = useChats();
   const [messages, setMessages] = useState<GroupMessage[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -371,6 +373,5 @@ export const useGroupChat = () => {
     searchMessages,
     updateVisualizationData,
     setError,
-    logChatMessage,
   };
 };
