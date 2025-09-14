@@ -90,6 +90,20 @@ export const useGroupChat = () => {
           // Extract the prompt after @astra
           const astraPrompt = content.replace(/@astra\s*/i, '').trim();
           
+          // Log the user's question to astra_chats table
+          await logChatMessage(
+            astraPrompt,
+            '', // We'll update this with the response later
+            undefined, // No conversation ID for team chat
+            undefined, // Response time will be calculated later
+            undefined, // Tokens used
+            undefined, // Model used
+            undefined, // Tools used
+            { team_message_id: data.id, asked_by_user_name: userName }, // Metadata
+            false, // Visualization
+            'team' // Mode
+          );
+          
           const response = await fetch(WEBHOOK_URL, {
             method: 'POST',
             headers: {
@@ -98,6 +112,7 @@ export const useGroupChat = () => {
             body: JSON.stringify({ chatInput: astraPrompt })
           });
 
+          const requestEndTime = Date.now();
           if (!response.ok) {
             throw new Error('Failed to get Astra response');
           }
@@ -137,6 +152,24 @@ export const useGroupChat = () => {
           if (astraError) {
             console.error('Error sending Astra response:', astraError);
           } else if (astraData) {
+            // Log Astra's response to astra_chats table
+            await logChatMessage(
+              astraPrompt,
+              astraResponse,
+              undefined, // No conversation ID for team chat
+              undefined, // Response time - could calculate if needed
+              undefined, // Tokens used
+              'n8n-workflow', // Model used
+              undefined, // Tools used
+              { 
+                team_message_id: astraData.id, 
+                asked_by_user_name: userName,
+                original_user_message_id: data.id 
+              }, // Metadata
+              false, // Visualization
+              'team' // Mode
+            );
+            
             // Immediately add Astra's response to local state
             setMessages(prev => [...prev, astraData]);
           }
@@ -161,6 +194,25 @@ export const useGroupChat = () => {
             .single();
 
           if (errorData) {
+            // Log error response to astra_chats table
+            await logChatMessage(
+              content.replace(/@astra\s*/i, '').trim(),
+              "I'm sorry, I'm having trouble connecting right now. Please try again in a moment.",
+              undefined, // No conversation ID for team chat
+              undefined, // Response time
+              undefined, // Tokens used
+              'n8n-workflow', // Model used
+              undefined, // Tools used
+              { 
+                team_message_id: errorData.id, 
+                asked_by_user_name: userName,
+                original_user_message_id: data.id,
+                error: true 
+              }, // Metadata
+              false, // Visualization
+              'team' // Mode
+            );
+            
             // Immediately add error message to local state
             setMessages(prev => [...prev, errorData]);
           }

@@ -102,7 +102,8 @@ export const useChats = () => {
         model_used: modelUsed || 'n8n-workflow',
         tools_used: toolsUsed || [],
         metadata: metadata || {},
-        visualization: visualization || false
+        visualization: visualization || false,
+        mode: mode
       };
 
       const { data, error } = await supabase
