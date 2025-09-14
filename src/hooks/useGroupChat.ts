@@ -177,14 +177,16 @@ export const useGroupChat = () => {
           user_id,
           user_name,
           user_email,
-          message,
+          prompt,
+          response,
           message_type,
           mentions,
           astra_prompt,
           visualization_data,
           metadata,
           created_at,
-          updated_at
+          updated_at,
+          is_team_response
         `)
         .eq('mode', 'team')
         .order('created_at', { ascending: true })
@@ -231,19 +233,17 @@ export const useGroupChat = () => {
           user_id,
           user_name,
           user_email,
-          prompt,
-          response,
+          message,
           message_type,
           mentions,
           astra_prompt,
           visualization_data,
           metadata,
           created_at,
-          updated_at,
-          is_team_response
+          updated_at
         `)
         .eq('mode', 'team')
-        .or(`prompt.ilike.%${query}%,response.ilike.%${query}%,user_name.ilike.%${query}%`)
+        .or(`message.ilike.%${query}%,user_name.ilike.%${query}%`)
         .order('created_at', { ascending: false })
         .limit(100);
 
