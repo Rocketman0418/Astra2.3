@@ -148,7 +148,16 @@ export const useGroupChat = () => {
             headers: {
               'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ chatInput: astraPrompt })
+            body: JSON.stringify({ 
+              chatInput: astraPrompt,
+              user_id: user.id,
+              user_email: user.email || '',
+              user_name: userName,
+              conversation_id: null,
+              mode: 'team',
+              original_message: content.trim(),
+              mentions: mentions
+            })
           });
 
           const requestStartTime = Date.now();

@@ -1,6 +1,8 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { Message } from '../types';
 import { useChats } from './useChats';
+import { useAuth } from '../contexts/AuthContext';
+import { supabase } from '../lib/supabase';
 import { v4 as uuidv4 } from 'uuid';
 
 const WEBHOOK_URL = 'https://healthrocket.app.n8n.cloud/webhook/8ec404be-7f51-47c8-8faf-0d139bd4c5e9/chat';
@@ -87,6 +89,11 @@ export const useChat = () => {
   const sendMessage = useCallback(async (text: string) => {
     if (!text.trim() || isLoading) return;
 
+    // Get user information
+    const userId = user?.id || '';
+    const userEmail = user?.email || '';
+    const userName = userProfile?.name || user?.email?.split('@')[0] || 'Unknown User';
+
     const messageId = uuidv4();
     const startTime = Date.now();
     const userMessage: Message = {
@@ -108,7 +115,14 @@ export const useChat = () => {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ chatInput: text.trim() })
+        body: JSON.stringify({ 
+          chatInput: text.trim(),
+          user_id: userId,
+          user_email: userEmail,
+          user_name: userName,
+          conversation_id: currentConversationId,
+          mode: 'private'
+        })
       });
       const requestEndTime = Date.now();
       const responseTimeMs = requestEndTime - requestStartTime;
@@ -219,6 +233,38 @@ export const useChat = () => {
       setIsLoading(false);
     }
   }, [isLoading, logChatMessage, currentConversationId, updateVisualizationStatus]);
+
+  // Get user profile data
+  const [userProfile, setUserProfile] = useState<{ name: string | null } | null>(null);
+  const { user } = useAuth();
+
+  // Fetch user profile when user changes
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      if (!user) return;
+
+      try {
+        const { data, error } = await supabase
+          .from('users')
+          .select('name')
+          .eq('id', user.id)
+          .single();
+
+        if (error) {
+          console.error('Error fetching user profile:', error);
+          return;
+        }
+
+        setUserProfile(data);
+      } catch (err) {
+        console.error('Error in fetchUserProfile:', err);
+      }
+    };
+
+    if (user) {
+      fetchUserProfile();
+    }
+  }, [user]);
 
   const toggleMessageExpansion = useCallback((messageId: string) => {
     setMessages(prev => 
