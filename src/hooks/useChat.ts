@@ -170,7 +170,13 @@ export const useChat = () => {
           {},
           undefined,
           [],
-          { request_time: requestStartTime }
+          { request_time: requestStartTime },
+          false, // visualization
+          'private', // mode
+          [], // mentions
+          undefined, // astraPrompt
+          undefined, // visualizationData
+          false // isTeamResponse
         );
         
         // Log Astra response
@@ -187,7 +193,13 @@ export const useChat = () => {
             request_time: requestStartTime,
             response_time: requestEndTime,
             total_processing_time: responseTimeMs
-          }
+          },
+          false, // visualization
+          'private', // mode
+          [], // mentions
+          text.trim(), // astraPrompt (original user question)
+          undefined, // visualizationData
+          false // isTeamResponse
         );
         
         // Store the chat ID in the message for later visualization tracking

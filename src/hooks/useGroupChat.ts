@@ -60,19 +60,22 @@ export const useGroupChat = () => {
       // Log user message to astra_chats
       const userMessageId = await logChatMessage(
         content.trim(),
-        'User message in team chat',
+        true, // isUser
         null, // No conversation ID for team chat
         0, // No response time for user messages
         {}, // No tokens used
         null, // No model used for user messages
         [], // No tools used
         { 
-          mentions: mentions,
           team_chat: true,
           message_type: 'user'
         },
-        false, // No visualization
-        'team' // Team mode
+        false, // visualization
+        'team', // mode
+        mentions, // mentions
+        undefined, // astraPrompt
+        undefined, // visualizationData
+        false // isTeamResponse
       );
 
       // If @astra was mentioned, get AI response
@@ -91,12 +94,14 @@ export const useGroupChat = () => {
             body: JSON.stringify({ chatInput: astraPrompt })
           });
 
-          const requestEndTime = Date.now();
+          const requestStartTime = Date.now();
           if (!response.ok) {
             throw new Error('Failed to get Astra response');
           }
 
           const responseText = await response.text();
+          const requestEndTime = Date.now();
+          const responseTimeMs = requestEndTime - requestStartTime;
           let astraResponse = responseText;
           
           // Try to parse JSON response
@@ -111,10 +116,10 @@ export const useGroupChat = () => {
 
           // Log Astra's response to astra_chats table
           const astraMessageId = await logChatMessage(
-            astraPrompt,
             astraResponse,
+            false, // isUser (Astra response)
             null, // No conversation ID for team chat
-            requestEndTime - Date.now(), // Response time
+            responseTimeMs, // Response time
             {}, // Tokens used - could be extracted from response
             'n8n-workflow', // Model used
             [], // Tools used
@@ -122,19 +127,22 @@ export const useGroupChat = () => {
               team_chat: true,
               message_type: 'astra',
               asked_by_user_name: userName,
-              original_user_message_id: userMessageId,
-              astra_prompt: astraPrompt
+              original_user_message_id: userMessageId
             },
-            false, // Visualization
-            'team' // Mode
+            false, // visualization
+            'team', // mode
+            [], // mentions (Astra doesn't mention anyone)
+            astraPrompt, // astraPrompt
+            undefined, // visualizationData
+            true // isTeamResponse
           );
         } catch (err) {
           console.error('Error getting Astra response:', err);
           
           // Log error response to astra_chats table
           await logChatMessage(
-            content.replace(/@astra\s*/i, '').trim(),
             "I'm sorry, I'm having trouble connecting right now. Please try again in a moment.",
+            false, // isUser (Astra response)
             null, // No conversation ID for team chat
             0, // No response time for errors
             {}, // No tokens used
@@ -145,11 +153,14 @@ export const useGroupChat = () => {
               message_type: 'astra',
               asked_by_user_name: userName,
               original_user_message_id: userMessageId,
-              error: true,
-              astra_prompt: content.replace(/@astra\s*/i, '').trim()
+              error: true
             },
-            false, // Visualization
-            'team' // Mode
+            false, // visualization
+            'team', // mode
+            [], // mentions
+            content.replace(/@astra\s*/i, '').trim(), // astraPrompt
+            undefined, // visualizationData
+            true // isTeamResponse
           );
         } finally {
           setIsAstraThinking(false);
@@ -162,7 +173,7 @@ export const useGroupChat = () => {
       console.error('Error in sendMessage:', err);
       setError('Failed to send message');
     }
-  }, [user, parseMentions, getUserName]);
+  }, [user, parseMentions, getUserName, logChatMessage, fetchMessages]);
 
   // Fetch message history
   const fetchMessages = useCallback(async (limit: number = 50) => {
@@ -177,16 +188,14 @@ export const useGroupChat = () => {
           user_id,
           user_name,
           user_email,
-          prompt,
-          response,
+          message,
           message_type,
           mentions,
           astra_prompt,
           visualization_data,
           metadata,
           created_at,
-          updated_at,
-          is_team_response
+          updated_at
         `)
         .eq('mode', 'team')
         .order('created_at', { ascending: true })
@@ -233,19 +242,17 @@ export const useGroupChat = () => {
           user_id,
           user_name,
           user_email,
-          prompt,
-          response,
+          message,
           message_type,
           mentions,
           astra_prompt,
           visualization_data,
           metadata,
           created_at,
-          updated_at,
-          is_team_response
+          updated_at
         `)
         .eq('mode', 'team')
-        .or(`prompt.ilike.%${query}%,response.ilike.%${query}%,user_name.ilike.%${query}%`)
+        .or(`message.ilike.%${query}%,user_name.ilike.%${query}%`)
         .order('created_at', { ascending: false })
         .limit(100);
 
@@ -260,7 +267,7 @@ export const useGroupChat = () => {
         user_id: chat.user_id,
         user_name: chat.user_name,
         user_email: chat.user_email,
-        message_content: chat.is_team_response ? chat.response : chat.prompt,
+        message_content: chat.message,
         message_type: chat.message_type as 'user' | 'astra' | 'system',
         mentions: chat.mentions || [],
         astra_prompt: chat.astra_prompt,
@@ -326,7 +333,7 @@ export const useGroupChat = () => {
             user_id: newChat.user_id,
             user_name: newChat.user_name,
             user_email: newChat.user_email,
-            message_content: newChat.is_team_response ? newChat.response : newChat.prompt,
+            message_content: newChat.message,
             message_type: newChat.message_type,
             mentions: newChat.mentions || [],
             astra_prompt: newChat.astra_prompt,
@@ -364,5 +371,6 @@ export const useGroupChat = () => {
     searchMessages,
     updateVisualizationData,
     setError,
+    logChatMessage,
   };
 };

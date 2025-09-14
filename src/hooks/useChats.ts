@@ -77,7 +77,12 @@ export const useChats = () => {
     modelUsed?: string,
     toolsUsed?: string[],
     metadata?: any,
-    visualization?: boolean
+    visualization?: boolean,
+    mode?: 'private' | 'team',
+    mentions?: string[],
+    astraPrompt?: string,
+    visualizationData?: string,
+    isTeamResponse?: boolean
   ): Promise<string | null> => {
     if (!user) return null;
 
@@ -98,7 +103,7 @@ export const useChats = () => {
         user_email: userEmail,
         user_name: displayName,
         message,
-        prompt: isUser ? message : '', // Keep for backward compatibility
+        prompt: isUser ? message : (astraPrompt || ''), // Keep for backward compatibility
         response: isUser ? '' : message, // Keep for backward compatibility
         message_type: messageType,
         conversation_id: chatConversationId,
@@ -109,7 +114,11 @@ export const useChats = () => {
         tools_used: toolsUsed || [],
         metadata: metadata || {},
         visualization: visualization || false,
-        mode: mode || 'private'
+        mode: mode || 'private',
+        mentions: mentions || [],
+        astra_prompt: astraPrompt,
+        visualization_data: visualizationData,
+        is_team_response: isTeamResponse || false
       };
 
       const { data, error } = await supabase
@@ -128,8 +137,8 @@ export const useChats = () => {
       if (chatConversationId === currentConversationId) {
         const newMessage: ChatMessage = {
           id: data.id,
-          prompt: data.prompt,
-          response: data.response,
+          message: data.message,
+          isUser: data.message_type === 'user',
           createdAt: data.created_at,
         };
         setCurrentMessages(prev => [...prev, newMessage]);
@@ -144,7 +153,7 @@ export const useChats = () => {
       setError('Failed to save chat message');
       return null;
     }
-  }, [user, currentConversationId, createNewConversation]);
+  }, [user, userProfile, fetchConversations]);
 
   // Fetch user's conversations
   const fetchConversations = useCallback(async () => {
@@ -155,8 +164,9 @@ export const useChats = () => {
       
       const { data, error } = await supabase
         .from('astra_chats')
-        .select('conversation_id, prompt, response, created_at')
+        .select('conversation_id, message, message_type, created_at')
         .eq('user_id', user.id)
+        .eq('mode', 'private')
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -197,12 +207,12 @@ export const useChats = () => {
       const conversationList: Conversation[] = Array.from(conversationMap.entries()).map(
         ([id, { messages, firstMessage, lastMessage }]) => ({
           id,
-          title: firstMessage.prompt.length > 50 
-            ? firstMessage.prompt.substring(0, 50) + '...'
-            : firstMessage.prompt,
-          lastMessage: lastMessage.response.length > 100
-            ? lastMessage.response.substring(0, 100) + '...'
-            : lastMessage.response,
+          title: firstMessage.message.length > 50 
+            ? firstMessage.message.substring(0, 50) + '...'
+            : firstMessage.message,
+          lastMessage: lastMessage.message.length > 100
+            ? lastMessage.message.substring(0, 100) + '...'
+            : lastMessage.message,
           createdAt: firstMessage.created_at,
           messageCount: messages.length,
         })
@@ -237,9 +247,10 @@ export const useChats = () => {
       
       const { data, error } = await supabase
         .from('astra_chats')
-        .select('id, prompt, response, created_at')
+        .select('id, message, message_type, created_at')
         .eq('user_id', user.id)
         .eq('conversation_id', conversationId)
+        .eq('mode', 'private')
         .order('created_at', { ascending: true });
 
       if (error) {
