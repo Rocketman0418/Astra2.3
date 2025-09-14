@@ -59,6 +59,81 @@ export const useChats = () => {
     }
   }, [user, fetchUserProfile]);
 
+  // Fetch user's conversations
+  const fetchConversations = useCallback(async () => {
+    if (!user) return;
+
+    try {
+      setLoading(true);
+      
+      const { data, error } = await supabase
+        .from('astra_chats')
+        .select('conversation_id, message, message_type, created_at')
+        .eq('user_id', user.id)
+        .eq('mode', 'private')
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching conversations:', error);
+        setError('Failed to load conversations');
+        return;
+      }
+
+      // Group messages by conversation_id
+      const conversationMap = new Map<string, {
+        messages: ChatRow[];
+        firstMessage: ChatRow;
+        lastMessage: ChatRow;
+      }>();
+
+      data.forEach((chat) => {
+        const convId = chat.conversation_id || 'default';
+        if (!conversationMap.has(convId)) {
+          conversationMap.set(convId, {
+            messages: [],
+            firstMessage: chat,
+            lastMessage: chat,
+          });
+        }
+        const conv = conversationMap.get(convId)!;
+        conv.messages.push(chat);
+        
+        // Update first and last messages
+        if (new Date(chat.created_at) < new Date(conv.firstMessage.created_at)) {
+          conv.firstMessage = chat;
+        }
+        if (new Date(chat.created_at) > new Date(conv.lastMessage.created_at)) {
+          conv.lastMessage = chat;
+        }
+      });
+
+      // Convert to conversation list
+      const conversationList: Conversation[] = Array.from(conversationMap.entries()).map(
+        ([id, { messages, firstMessage, lastMessage }]) => ({
+          id,
+          title: firstMessage.message.length > 50 
+            ? firstMessage.message.substring(0, 50) + '...'
+            : firstMessage.message,
+          lastMessage: lastMessage.message.length > 100
+            ? lastMessage.message.substring(0, 100) + '...'
+            : lastMessage.message,
+          createdAt: firstMessage.created_at,
+          messageCount: messages.length,
+        })
+      );
+
+      // Sort by creation date (newest first)
+      conversationList.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+      setConversations(conversationList);
+    } catch (err) {
+      console.error('Error in fetchConversations:', err);
+      setError('Failed to load conversations');
+    } finally {
+      setLoading(false);
+    }
+  }, [user]);
+
   // Generate a new conversation ID
   const createNewConversation = useCallback(() => {
     const newConversationId = uuidv4();
@@ -154,81 +229,6 @@ export const useChats = () => {
       return null;
     }
   }, [user, userProfile, fetchConversations]);
-
-  // Fetch user's conversations
-  const fetchConversations = useCallback(async () => {
-    if (!user) return;
-
-    try {
-      setLoading(true);
-      
-      const { data, error } = await supabase
-        .from('astra_chats')
-        .select('conversation_id, message, message_type, created_at')
-        .eq('user_id', user.id)
-        .eq('mode', 'private')
-        .order('created_at', { ascending: false });
-
-      if (error) {
-        console.error('Error fetching conversations:', error);
-        setError('Failed to load conversations');
-        return;
-      }
-
-      // Group messages by conversation_id
-      const conversationMap = new Map<string, {
-        messages: ChatRow[];
-        firstMessage: ChatRow;
-        lastMessage: ChatRow;
-      }>();
-
-      data.forEach((chat) => {
-        const convId = chat.conversation_id || 'default';
-        if (!conversationMap.has(convId)) {
-          conversationMap.set(convId, {
-            messages: [],
-            firstMessage: chat,
-            lastMessage: chat,
-          });
-        }
-        const conv = conversationMap.get(convId)!;
-        conv.messages.push(chat);
-        
-        // Update first and last messages
-        if (new Date(chat.created_at) < new Date(conv.firstMessage.created_at)) {
-          conv.firstMessage = chat;
-        }
-        if (new Date(chat.created_at) > new Date(conv.lastMessage.created_at)) {
-          conv.lastMessage = chat;
-        }
-      });
-
-      // Convert to conversation list
-      const conversationList: Conversation[] = Array.from(conversationMap.entries()).map(
-        ([id, { messages, firstMessage, lastMessage }]) => ({
-          id,
-          title: firstMessage.message.length > 50 
-            ? firstMessage.message.substring(0, 50) + '...'
-            : firstMessage.message,
-          lastMessage: lastMessage.message.length > 100
-            ? lastMessage.message.substring(0, 100) + '...'
-            : lastMessage.message,
-          createdAt: firstMessage.created_at,
-          messageCount: messages.length,
-        })
-      );
-
-      // Sort by creation date (newest first)
-      conversationList.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-
-      setConversations(conversationList);
-    } catch (err) {
-      console.error('Error in fetchConversations:', err);
-      setError('Failed to load conversations');
-    } finally {
-      setLoading(false);
-    }
-  }, [user]);
 
   // Load a specific conversation
   const loadConversation = useCallback(async (conversationId: string) => {
