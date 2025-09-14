@@ -90,7 +90,7 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({ isOpen, onClose, onLoa
               </div>
               <button
                 onClick={onClose}
-                className="lg:hidden p-2 hover:bg-gray-700 rounded-lg transition-colors"
+                className="p-2 hover:bg-gray-700 rounded-lg transition-colors"
               >
                 <X className="w-5 h-5 text-gray-400" />
               </button>

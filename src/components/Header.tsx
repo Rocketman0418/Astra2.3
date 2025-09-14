@@ -1,5 +1,5 @@
 import React from 'react';
-import { Menu, User, MessageSquare, Users } from 'lucide-react';
+import { Menu, User, MessageSquare, Users, Search } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { ChatMode } from '../types';
 
@@ -7,12 +7,16 @@ interface HeaderProps {
   onToggleSidebar: () => void;
   showSidebarToggle?: boolean;
   chatMode?: ChatMode;
+  onToggleSearch?: () => void;
+  onToggleMembers?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({ 
   onToggleSidebar, 
   showSidebarToggle = true,
-  chatMode = 'private'
+  chatMode = 'private',
+  onToggleSearch,
+  onToggleMembers
 }) => {
   const { user } = useAuth();
 
@@ -30,17 +34,33 @@ export const Header: React.FC<HeaderProps> = ({
             </button>
           )}
           
-          {/* Chat mode indicator */}
-          <div className="flex items-center space-x-2 text-white">
-            {chatMode === 'private' ? (
+          {/* Team chat controls */}
+          {chatMode === 'team' && (
+            <div className="flex items-center space-x-2">
+              <button
+                onClick={onToggleMembers}
+                className="p-2 hover:bg-blue-700 rounded-lg transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center touch-manipulation my-2"
+              >
+                <Users className="w-6 h-6 text-white" />
+              </button>
+              <button
+                onClick={onToggleSearch}
+                className="p-2 hover:bg-blue-700 rounded-lg transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center touch-manipulation my-2"
+              >
+                <Search className="w-6 h-6 text-white" />
+              </button>
+            </div>
+          )}
+          
+          {/* Private chat mode indicator */}
+          {chatMode === 'private' && (
+            <div className="flex items-center space-x-2 text-white">
               <MessageSquare className="w-5 h-5" />
-            ) : (
-              <Users className="w-5 h-5" />
-            )}
-            <span className="text-sm font-medium hidden sm:inline">
-              {chatMode === 'private' ? 'Private Chat' : 'Team Chat'}
-            </span>
-          </div>
+              <span className="text-sm font-medium hidden sm:inline">
+                Private Chat
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Center - Logo and title */}

@@ -11,6 +11,8 @@ export const MainContainer: React.FC = () => {
   const [chatMode, setChatMode] = useState<ChatMode>('team');
   const [conversationToLoad, setConversationToLoad] = useState<string | null>(null);
   const [shouldStartNewChat, setShouldStartNewChat] = useState(false);
+  const [showSearch, setShowSearch] = useState(false);
+  const [showMembers, setShowMembers] = useState(false);
 
   const handleLoadConversation = (conversationId: string) => {
     setConversationToLoad(conversationId);
@@ -21,6 +23,17 @@ export const MainContainer: React.FC = () => {
     setShouldStartNewChat(true);
     setSidebarOpen(false);
   };
+
+  const handleToggleSearch = () => {
+    setShowSearch(!showSearch);
+    setShowMembers(false); // Close members if open
+  };
+
+  const handleToggleMembers = () => {
+    setShowMembers(!showMembers);
+    setShowSearch(false); // Close search if open
+  };
+
   return (
     <div className="flex flex-col h-screen bg-gray-900">
       {/* Sidebar - only show for private chat mode */}
@@ -40,6 +53,8 @@ export const MainContainer: React.FC = () => {
           onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
           showSidebarToggle={chatMode === 'private'}
           chatMode={chatMode}
+          onToggleSearch={handleToggleSearch}
+          onToggleMembers={handleToggleMembers}
         />
         
         {/* Chat Mode Toggle */}
@@ -59,7 +74,12 @@ export const MainContainer: React.FC = () => {
               onNewChatStarted={() => setShouldStartNewChat(false)}
             />
           ) : (
-            <GroupChat />
+            <GroupChat 
+              showSearch={showSearch}
+              showMembers={showMembers}
+              onCloseSearch={() => setShowSearch(false)}
+              onCloseMembers={() => setShowMembers(false)}
+            />
           )}
         </div>
       </div>

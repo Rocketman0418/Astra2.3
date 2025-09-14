@@ -130,6 +130,20 @@ export const GroupMessage: React.FC<GroupMessageProps> = ({
   const isAstraMessage = message.message_type === 'astra';
   const hasVisualization = message.visualization_data;
   const isGeneratingVisualization = visualizationState?.isGenerating || false;
+  
+  // Message expansion logic
+  const [isExpanded, setIsExpanded] = React.useState(false);
+  const isLongMessage = message.message_content.length > 300;
+  const shouldTruncate = isLongMessage && !isExpanded;
+  const displayText = shouldTruncate 
+    ? message.message_content.substring(0, 300) + '...'
+    : message.message_content;
+
+  const lines = displayText.split('\n');
+  const shouldShowMore = lines.length > 5 && !isExpanded;
+  const finalText = shouldShowMore 
+    ? lines.slice(0, 5).join('\n') + '...'
+    : displayText;
 
   const getButtonText = () => {
     if (isGeneratingVisualization) {
@@ -204,8 +218,22 @@ export const GroupMessage: React.FC<GroupMessageProps> = ({
           )}
 
           <div className="break-words text-sm leading-relaxed">
-            {formatMessageContent(message.message_content, message.mentions, isAstraMessage)}
+            {isOwnMessage && !isAstraMessage ? (
+              <div className="whitespace-pre-wrap">{finalText}</div>
+            ) : (
+              formatMessageContent(finalText, message.mentions, isAstraMessage)
+            )}
           </div>
+          
+          {/* Show More/Less button */}
+          {(isLongMessage || shouldShowMore) && (
+            <button
+              onClick={() => setIsExpanded(!isExpanded)}
+              className="text-xs underline mt-2 opacity-90 hover:opacity-100 transition-opacity"
+            >
+              {isExpanded ? 'Show Less' : 'Show More'}
+            </button>
+          )}
 
           {/* Visualization button for Astra messages */}
           {isAstraMessage && (onViewVisualization || onCreateVisualization) && (

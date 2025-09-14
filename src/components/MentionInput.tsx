@@ -21,7 +21,7 @@ export const MentionInput: React.FC<MentionInputProps> = ({
   onChange,
   onSend,
   disabled,
-  placeholder = "Type a message...",
+  placeholder = "Type a message... Use @astra for AI Intelligence",
   users = []
 }) => {
   const [showMentions, setShowMentions] = useState(false);

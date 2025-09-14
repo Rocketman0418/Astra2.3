@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
-import { Search, Users, X } from 'lucide-react';
+import { Search, Users, X, ArrowLeft } from 'lucide-react';
 import { GroupMessage } from './GroupMessage';
 import { MentionInput } from './MentionInput';
 import { LoadingIndicator } from './LoadingIndicator';
@@ -9,6 +9,7 @@ import { useGroupChat } from '../hooks/useGroupChat';
 import { useVisualization } from '../hooks/useVisualization';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
+import { GroupMessage as GroupMessageType } from '../types';
 
 interface User {
   id: string;
@@ -20,15 +21,22 @@ interface UserWithCurrentFlag extends User {
   isCurrentUser?: boolean;
 }
 
-export const GroupChat: React.FC = () => {
+interface GroupChatProps {
+  showSearch?: boolean;
+  showMembers?: boolean;
+  onCloseSearch?: () => void;
+  onCloseMembers?: () => void;
+}
+
+export const GroupChat: React.FC<GroupChatProps> = ({ showSearch = false, showMembers = false, onCloseSearch, onCloseMembers }) => {
   const { user } = useAuth();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [inputValue, setInputValue] = useState('');
   const [users, setUsers] = useState<UserWithCurrentFlag[]>([]);
   const [currentUserData, setCurrentUserData] = useState<User | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [showSearch, setShowSearch] = useState(false);
-  const [showMembers, setShowMembers] = useState(false);
+  const [searchResults, setSearchResults] = useState<GroupMessageType[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
   const [visualizationStates, setVisualizationStates] = useState<Record<string, any>>({});
 
   const {
@@ -37,6 +45,7 @@ export const GroupChat: React.FC = () => {
     isAstraThinking,
     sendMessage,
     updateVisualizationData,
+    searchMessages,
   } = useGroupChat();
 
   const {
@@ -48,6 +57,19 @@ export const GroupChat: React.FC = () => {
     messageToHighlight,
     clearHighlight
   } = useVisualization();
+
+  // Handle search functionality
+  const handleSearch = useCallback(async (query: string) => {
+    setSearchQuery(query);
+    if (query.trim()) {
+      setIsSearching(true);
+      const results = await searchMessages(query);
+      setSearchResults(results);
+      setIsSearching(false);
+    } else {
+      setSearchResults([]);
+    }
+  }, [searchMessages]);
 
   // Fetch users for mentions
   useEffect(() => {
@@ -193,13 +215,25 @@ export const GroupChat: React.FC = () => {
     return null;
   };
 
-  // Filter messages based on search
-  const filteredMessages = searchQuery
-    ? messages.filter(msg => 
-        msg.message_content.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        msg.user_name.toLowerCase().includes(searchQuery.toLowerCase())
-      )
-    : messages;
+  const formatTime = (timestamp: string): string => {
+    const date = new Date(timestamp);
+    const now = new Date();
+    const diffInHours = (now.getTime() - date.getTime()) / (1000 * 60 * 60);
+
+    if (diffInHours < 1) {
+      const diffInMinutes = Math.floor(diffInHours * 60);
+      return diffInMinutes <= 1 ? 'Just now' : `${diffInMinutes}m ago`;
+    } else if (diffInHours < 24) {
+      return `${Math.floor(diffInHours)}h ago`;
+    } else {
+      return date.toLocaleDateString([], { 
+        month: 'short', 
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    }
+  };
 
   // Show loading view when generating visualization
 
@@ -230,52 +264,163 @@ export const GroupChat: React.FC = () => {
     }
   }
 
-  return (
-    <div className="flex flex-col h-full">
-      {/* Header */}
-      <div className="bg-gray-800 border-b border-gray-700 p-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <Users className="w-6 h-6 text-blue-400" />
-            <div>
-              <h2 className="text-lg font-bold text-white">Team Chat</h2>
-              <p className="text-sm text-gray-400">
-                <button 
-                  onClick={() => setShowMembers(true)}
-                  className="hover:text-blue-300 transition-colors underline"
-                >
-                  {users.length + 1} members
-                </button>
-                {' • Use @astra for AI Intelligence'}
-              </p>
+  // Show search sidebar
+  if (showSearch) {
+    return (
+      <div className="flex h-full">
+        {/* Search Sidebar */}
+        <div className="w-80 bg-gray-800 border-r border-gray-700 flex flex-col">
+          <div className="p-4 border-b border-gray-700">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center space-x-2">
+                <Search className="w-5 h-5 text-blue-400" />
+                <h2 className="text-lg font-bold text-white">Search Messages</h2>
+              </div>
+              <button
+                onClick={onCloseSearch}
+                className="p-2 hover:bg-gray-700 rounded-lg transition-colors"
+              >
+                <X className="w-5 h-5 text-gray-400" />
+              </button>
             </div>
-          </div>
 
-          <button
-            onClick={() => setShowSearch(!showSearch)}
-            className="p-2 hover:bg-gray-700 rounded-lg transition-colors"
-          >
-            <Search className="w-5 h-5 text-gray-400" />
-          </button>
-        </div>
-
-        {/* Search bar */}
-        {showSearch && (
-          <div className="mt-4">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
               <input
                 type="text"
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={(e) => handleSearch(e.target.value)}
                 placeholder="Search messages..."
                 className="w-full pl-10 pr-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition-colors text-sm"
               />
             </div>
           </div>
-        )}
-      </div>
 
+          <div className="flex-1 overflow-y-auto">
+            {isSearching ? (
+              <div className="p-4 text-center">
+                <div className="w-6 h-6 border-2 border-blue-500/30 border-t-blue-500 rounded-full animate-spin mx-auto" />
+                <p className="text-gray-400 text-sm mt-2">Searching...</p>
+              </div>
+            ) : searchResults.length === 0 && searchQuery ? (
+              <div className="p-4 text-center">
+                <Search className="w-12 h-12 text-gray-600 mx-auto mb-2" />
+                <p className="text-gray-400 text-sm">No messages found</p>
+                <p className="text-gray-500 text-xs mt-1">Try a different search term</p>
+              </div>
+            ) : searchResults.length === 0 ? (
+              <div className="p-4 text-center">
+                <Search className="w-12 h-12 text-gray-600 mx-auto mb-2" />
+                <p className="text-gray-400 text-sm">Start typing to search</p>
+              </div>
+            ) : (
+              <div className="p-2">
+                {searchResults.map((message) => (
+                  <div
+                    key={message.id}
+                    className="p-3 rounded-lg cursor-pointer transition-all duration-200 mb-2 hover:bg-gray-700/50"
+                  >
+                    <div className="flex items-start space-x-3">
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
+                        message.message_type === 'astra' 
+                          ? 'bg-gradient-to-br from-blue-600 to-purple-600 text-white'
+                          : 'bg-gray-600 text-white'
+                      }`}>
+                        {message.message_type === 'astra' ? '🚀' : message.user_name.charAt(0).toUpperCase()}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center space-x-2 mb-1">
+                          <span className="text-white text-sm font-medium">{message.user_name}</span>
+                          <span className="text-gray-500 text-xs">{formatTime(message.created_at)}</span>
+                        </div>
+                        <p className="text-gray-300 text-sm line-clamp-3">
+                          {message.message_content}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Main Chat Area */}
+        <div className="flex-1 flex flex-col">
+          {/* Messages */}
+          <div className="flex-1 overflow-y-auto p-4 space-y-1 chat-messages-container">
+            {loading ? (
+              <div className="flex items-center justify-center h-32">
+                <div className="text-center">
+                  <div className="w-8 h-8 border-2 border-blue-500/30 border-t-blue-500 rounded-full animate-spin mx-auto mb-2" />
+                  <p className="text-gray-400 text-sm">Loading messages...</p>
+                </div>
+              </div>
+            ) : messages.length === 0 ? (
+              <div className="flex items-center justify-center h-32">
+                <div className="text-center">
+                  <Users className="w-12 h-12 text-gray-600 mx-auto mb-2" />
+                  <p className="text-gray-400 text-sm">No messages yet</p>
+                  <p className="text-gray-500 text-xs mt-1">Start the conversation!</p>
+                </div>
+              </div>
+            ) : (
+              <>
+                {messages.map((message) => (
+                  <div key={message.id} id={`message-${message.id}`}>
+                    <GroupMessage
+                      message={message}
+                      currentUserId={user?.id || ''}
+                      onViewVisualization={handleViewVisualization}
+                      onCreateVisualization={handleCreateVisualization}
+                      visualizationState={getVisualizationState(message.id)}
+                    />
+                  </div>
+                ))}
+
+                {isAstraThinking && (
+                  <div className="flex justify-start mb-4">
+                    <div className="flex-shrink-0 mr-3">
+                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center text-sm">
+                        🚀
+                      </div>
+                    </div>
+                    <div className="bg-gradient-to-br from-gray-700 to-gray-800 text-white rounded-2xl px-4 py-3 border border-blue-500/20">
+                      <div className="flex items-center space-x-2">
+                        <span className="text-sm">Astra is thinking</span>
+                        <div className="flex space-x-1">
+                          <div className="w-1 h-1 bg-white rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                          <div className="w-1 h-1 bg-white rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                          <div className="w-1 h-1 bg-white rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                <div ref={messagesEndRef} />
+              </>
+            )}
+          </div>
+
+          {/* Input */}
+          <div className="bg-gray-900 border-t border-gray-700 p-4">
+            <MentionInput
+              value={inputValue}
+              onChange={setInputValue}
+              onSend={handleSendMessage}
+              disabled={loading}
+              placeholder="Type a message... Use @astra for AI Intelligence"
+              users={users}
+            />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col h-full">
       {/* Members Modal */}
       {showMembers && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
@@ -283,7 +428,7 @@ export const GroupChat: React.FC = () => {
             <div className="flex items-center justify-between p-4 border-b border-gray-700">
               <h3 className="text-lg font-bold text-white">Team Members</h3>
               <button
-                onClick={() => setShowMembers(false)}
+                onClick={onCloseMembers}
                 className="p-2 hover:bg-gray-700 rounded-lg transition-colors"
               >
                 <X className="w-5 h-5 text-gray-400" />
@@ -342,21 +487,17 @@ export const GroupChat: React.FC = () => {
               <p className="text-gray-400 text-sm">Loading messages...</p>
             </div>
           </div>
-        ) : filteredMessages.length === 0 ? (
+        ) : messages.length === 0 ? (
           <div className="flex items-center justify-center h-32">
             <div className="text-center">
               <Users className="w-12 h-12 text-gray-600 mx-auto mb-2" />
-              <p className="text-gray-400 text-sm">
-                {searchQuery ? 'No messages found' : 'No messages yet'}
-              </p>
-              <p className="text-gray-500 text-xs mt-1">
-                {searchQuery ? 'Try a different search term' : 'Start the conversation!'}
-              </p>
+              <p className="text-gray-400 text-sm">No messages yet</p>
+              <p className="text-gray-500 text-xs mt-1">Start the conversation!</p>
             </div>
           </div>
         ) : (
           <>
-            {filteredMessages.map((message) => (
+            {messages.map((message) => (
               <div key={message.id} id={`message-${message.id}`}>
                 <GroupMessage
                   message={message}
@@ -400,7 +541,7 @@ export const GroupChat: React.FC = () => {
           onChange={setInputValue}
           onSend={handleSendMessage}
           disabled={loading}
-          placeholder="Type a message... Use @astra for AI help"
+          placeholder="Type a message... Use @astra for AI Intelligence"
           users={users}
         />
       </div>
