@@ -38,7 +38,7 @@ export const useChat = () => {
         // Add user message
         uiMessages.push({
           id: `${dbMessage.id}-user`,
-          text: dbMessage.prompt,
+          text: dbMessage.message,
           isUser: true,
           timestamp: new Date(dbMessage.createdAt)
         });
@@ -46,7 +46,7 @@ export const useChat = () => {
         // Add Astra response
         uiMessages.push({
           id: `${dbMessage.id}-astra`,
-          text: dbMessage.response,
+          text: dbMessage.message,
           isUser: false,
           timestamp: new Date(dbMessage.createdAt)
         });

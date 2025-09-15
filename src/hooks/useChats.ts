@@ -176,8 +176,6 @@ export const useChats = () => {
         user_email: userEmail,
         user_name: displayName,
         message,
-        prompt: isUser ? message : (astraPrompt || ''), // Keep for backward compatibility
-        response: isUser ? '' : message, // Keep for backward compatibility
         message_type: messageType,
         conversation_id: chatConversationId,
         response_time_ms: responseTimeMs || 0,
