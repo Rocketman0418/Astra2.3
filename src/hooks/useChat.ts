@@ -43,6 +43,8 @@ export const useChat = () => {
           return;
         }
 
+        console.log('✅ Received Astra response:', { messageText: messageText.substring(0, 100) + '...' });
+
         setUserProfile(data);
       } catch (err) {
         console.error('Error in fetchUserProfile:', err);
@@ -69,11 +71,13 @@ export const useChat = () => {
         if (dbMessage.isUser) {
           // Add user message
           uiMessages.push({
+        
+        console.log('✅ Added Astra message to UI, current message count:', messages.length + 1);
             id: `${dbMessage.id}-user`,
             text: dbMessage.message,
             isUser: true,
             timestamp: new Date(dbMessage.createdAt),
-            chatId: dbMessage.id
+          const userChatId = await logChatMessage(
           });
         } else {
           // Add Astra response
@@ -88,6 +92,8 @@ export const useChat = () => {
             visualization_data: dbMessage.visualizationData
           });
           
+          console.log('✅ Logged user message to database:', userChatId);
+          
           console.log('🔍 useChat: Added Astra message with visualization data:', {
             chatId: dbMessage.id,
             hasVisualizationData: !!dbMessage.visualizationData,
@@ -98,9 +104,16 @@ export const useChat = () => {
       
       console.log('useChat: Setting messages from database', { uiMessagesLength: uiMessages.length });
       setMessages([
+        {
+          id: 'welcome',
+          text: "Welcome, I'm Astra. What can I help you with today?",
+          isUser: false,
+          timestamp: new Date(),
+          isCentered: true
+        },
         ...uiMessages
       ]);
-    } else if (currentConversationId && currentMessages.length === 0 && !chatsLoading) {
+    } else if (!currentConversationId || (currentMessages.length === 0 && !chatsLoading && !isLoading)) {
       // Reset to welcome message for new conversations
       console.log('useChat: Resetting to welcome message');
       setMessages([
@@ -113,7 +126,7 @@ export const useChat = () => {
         }
       ]);
     }
-  }, [currentMessages, currentConversationId, chatsLoading]);
+  }, [currentMessages, currentConversationId, chatsLoading, isLoading]);
 
   // Load the most recent conversation when component mounts or when returning to private chat
   useEffect(() => {
@@ -318,6 +331,8 @@ export const useChat = () => {
           false, // visualization
           'private', // mode
           [], // mentions
+          console.log('✅ Logged Astra response to database:', chatId);
+          
           text.trim(), // astraPrompt (original user question)
           undefined // visualizationData
         );
@@ -325,6 +340,7 @@ export const useChat = () => {
         // Update the message in state with the database chatId
         if (chatId) {
           setMessages(prev => prev.map(msg => 
+            console.log('✅ Updated Astra message with chatId:', chatId);
             msg.id === astraMessage.id 
               ? { ...msg, chatId: chatId }
               : msg
