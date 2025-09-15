@@ -169,6 +169,7 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({
   return (
     <div className="flex flex-col h-full">
       <div className="flex-1 overflow-y-auto px-3 md:px-4 chat-messages-container" style={{ paddingBottom: '120px' }}>
+      <div className="flex-1 overflow-y-auto px-3 md:px-4 chat-messages-container">
         <div className="max-w-4xl mx-auto space-y-3 md:space-y-4 pt-4">
           {messages.map((message) => (
             <div key={message.id} id={`message-${message.id}`}>
@@ -188,12 +189,14 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({
         </div>
       </div>
 
-      <ChatInput
-        value={inputValue}
-        onChange={setInputValue}
-        onSend={sendMessage}
-        disabled={isLoading}
-      />
+      <div className="flex-shrink-0">
+        <ChatInput
+          value={inputValue}
+          onChange={setInputValue}
+          onSend={sendMessage}
+          disabled={isLoading}
+        />
+      </div>
     </div>
   );
 };
