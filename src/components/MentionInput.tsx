@@ -64,7 +64,7 @@ export const MentionInput: React.FC<MentionInputProps> = ({
         const fileReferences = uploadResults.map(result => {
           const emoji = result.file.type.startsWith('image/') ? '🖼️' : 
                        result.file.type.startsWith('video/') ? '🎥' : '📄';
-          return `[${emoji} ${result.file.name}|||${result.publicUrl}]`;
+          return `[${emoji} ${result.file.name}|||${result.url}]`;
         }).join(' ');
         
         messageContent = fileReferences + (value.trim() ? '\n' + value : '');

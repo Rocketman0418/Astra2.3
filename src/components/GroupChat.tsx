@@ -61,31 +61,15 @@ export const GroupChat: React.FC<GroupChatProps> = ({
   }, [messages, messageToHighlight]);
 
   // Handle sending messages with media
-  const handleSendMessage = useCallback(async (content: string, mediaInfo?: Array<{name: string, size: number, type: string, preview: string}>) => {
-    if (!content.trim() && (!mediaInfo || mediaInfo.length === 0)) {
+  const handleSendMessage = useCallback(async (content: string) => {
+    if (!content.trim()) {
       return;
     }
 
-    console.log('GroupChat: Sending message with:', { content, mediaCount: mediaInfo?.length || 0 });
-
-    let finalContent = content.trim();
-
-    // Add media information to the message content if media is attached
-    if (mediaInfo && mediaInfo.length > 0) {
-      const mediaDescriptions = mediaInfo.map(media => {
-        const emoji = media.type === 'image' ? '🖼️' : media.type === 'video' ? '🎥' : '📄';
-        // Don't include preview URL in persisted data to avoid blob URL errors
-        return `[${emoji} ${media.name}]`;
-      }).join(' ');
-      
-      // Put media first, then text content below
-      finalContent = mediaDescriptions + (content.trim() ? `\n\n${content.trim()}` : '');
-    }
-
-    console.log('GroupChat: Final content being sent:', finalContent);
+    console.log('GroupChat: Sending message with content:', content);
 
     try {
-      await sendMessage(finalContent);
+      await sendMessage(content);
       setInputValue('');
     } catch (err) {
       console.error('Error sending message:', err);
