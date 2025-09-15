@@ -222,7 +222,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
         )}
         
         {/* Reply button for Astra messages */}
-        {isAstraMessage && !message.isCentered && onReply && (
+        {isAstraMessage && !message.isCentered && onReply && message.chatId && (
           <div className="mt-2 md:mt-3">
             <button
               onClick={() => onReply(message.chatId || message.id, message.text)}
