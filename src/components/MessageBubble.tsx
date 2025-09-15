@@ -191,7 +191,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
         {!message.isUser && message.chatId && onCreateVisualization && onViewVisualization && (
           <div className="mt-2 md:mt-3">
             <VisualizationButton
-              messageId={message.id}
+              messageId={message.chatId}
               messageText={message.text}
               onCreateVisualization={onCreateVisualization}
               onViewVisualization={onViewVisualization}

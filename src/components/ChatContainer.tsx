@@ -78,23 +78,14 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({
 
   // Handle visualization creation for private chat
   const handleCreateVisualization = useCallback(async (messageId: string, messageContent: string) => {
-    console.log('🎯 Private chat: Starting visualization generation for message:', messageId);
+    console.log('🎯 Private chat: Starting visualization generation for chatId:', messageId);
     console.log('🎯 Private chat: Message content length:', messageContent.length);
-    console.log('🎯 Private chat: Available messages:', messages.map(m => ({ id: m.id, chatId: m.chatId })));
     
     setIsCreatingVisualization(true);
     
-    // Find the actual chat ID from the message
-    let actualChatId: string | null = null;
-    const message = messages.find(m => m.id === messageId || m.chatId === messageId);
-    if (message && message.chatId) {
-      actualChatId = message.chatId;
-      console.log('🎯 Private chat: Using chatId:', actualChatId);
-    } else {
-      console.error('❌ Private chat: Could not find chatId for message:', messageId);
-      setIsCreatingVisualization(false);
-      return;
-    }
+    // messageId is already the chatId from MessageBubble
+    const actualChatId = messageId;
+    console.log('🎯 Private chat: Using chatId:', actualChatId);
     
     // Set generating state immediately
     updateVisualizationState(actualChatId, { isGenerating: true, content: null });
@@ -129,17 +120,13 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({
 
   // Handle viewing visualization for private chat
   const handleViewVisualization = useCallback((messageId: string) => {
-    console.log('👁️ Private chat: Viewing visualization for message:', messageId);
+    console.log('👁️ Private chat: Viewing visualization for chatId:', messageId);
     
-    // Find the actual chat ID from the message
-    let actualChatId: string | null = null;
-    const message = messages.find(m => m.id === messageId || m.chatId === messageId);
-    if (message && message.chatId) {
-      actualChatId = message.chatId;
-    } else {
-      console.error('❌ Private chat: Could not find chatId for message:', messageId);
-      return;
-    }
+    // messageId is already the chatId from MessageBubble
+    const actualChatId = messageId;
+    
+    // Find the message object for additional checks
+    const message = messages.find(m => m.chatId === actualChatId);
     
     // First check if we have visualization data in the database
     if (message?.visualization) {
