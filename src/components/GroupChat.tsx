@@ -193,12 +193,24 @@ export const GroupChat: React.FC<GroupChatProps> = ({ showTeamMenu = false, onCl
 
       const summaryPrompt = `Please provide a brief summary of the team chat activity from the last ${period.toLowerCase()}.
 
-Focus on:
-- Key topics discussed
-- Important decisions made
-- Action items or tasks mentioned
-- Notable insights or solutions shared
-- Overall team collaboration patterns
+Please organize your response into exactly 3 sections with a target of 500 words total:
+
+**Activity:**
+- Who posted messages and how frequently
+- Posting patterns and engagement levels
+- Most active participants during this period
+
+**Content:**
+- General topics and subjects discussed by users
+- Questions asked by users that Astra responded to (mention who asked what, but do NOT include Astra's actual response content)
+- Types of content shared (images, links, etc.)
+
+**Insights:**
+- Overall team communication patterns
+- Notable trends in the conversations
+- Key observations about team collaboration during this period
+
+IMPORTANT: When mentioning Astra responses, only note who asked what question and that Astra responded - do NOT include any of Astra's actual message content as this can be confusing.
 
 Here are the messages:
 
