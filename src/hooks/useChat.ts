@@ -9,6 +9,8 @@ const WEBHOOK_URL = 'https://healthrocket.app.n8n.cloud/webhook/8ec404be-7f51-47
 
 export const useChat = () => {
   const { logChatMessage, currentMessages, currentConversationId, loading: chatsLoading, loadConversation, startNewConversation: chatsStartNewConversation, updateVisualizationStatus, conversations, hasInitialized } = useChats();
+  const { user } = useAuth();
+  const [userProfile, setUserProfile] = useState<{ name: string | null } | null>(null);
   const [visualizationStates, setVisualizationStates] = useState<Record<string, any>>({});
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -23,6 +25,34 @@ export const useChat = () => {
   const [inputValue, setInputValue] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [hasLoadedConversation, setHasLoadedConversation] = useState(false);
+
+  // Fetch user profile when user changes
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      if (!user) return;
+
+      try {
+        const { data, error } = await supabase
+          .from('users')
+          .select('name')
+          .eq('id', user.id)
+          .single();
+
+        if (error) {
+          console.error('Error fetching user profile:', error);
+          return;
+        }
+
+        setUserProfile(data);
+      } catch (err) {
+        console.error('Error in fetchUserProfile:', err);
+      }
+    };
+
+    if (user) {
+      fetchUserProfile();
+    }
+  }, [user]);
 
   // Convert database messages to UI messages
   useEffect(() => {
@@ -241,39 +271,7 @@ export const useChat = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [isLoading, logChatMessage, currentConversationId, updateVisualizationStatus]);
-
-  // Get user profile data
-  const [userProfile, setUserProfile] = useState<{ name: string | null } | null>(null);
-  const { user } = useAuth();
-
-  // Fetch user profile when user changes
-  useEffect(() => {
-    const fetchUserProfile = async () => {
-      if (!user) return;
-
-      try {
-        const { data, error } = await supabase
-          .from('users')
-          .select('name')
-          .eq('id', user.id)
-          .single();
-
-        if (error) {
-          console.error('Error fetching user profile:', error);
-          return;
-        }
-
-        setUserProfile(data);
-      } catch (err) {
-        console.error('Error in fetchUserProfile:', err);
-      }
-    };
-
-    if (user) {
-      fetchUserProfile();
-    }
-  }, [user]);
+  }, [isLoading, logChatMessage, currentConversationId, updateVisualizationStatus, user, userProfile]);
 
   const toggleMessageExpansion = useCallback((messageId: string) => {
     setMessages(prev => 
