@@ -78,16 +78,14 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({
       return localState;
     }
     
-    // Check if the message has stored visualization in database
+    // Check if the message has stored visualization in database - SAME AS TEAM CHAT
     const message = messages.find(m => m.chatId === messageId);
-    if (message?.visualization || message?.hasStoredVisualization) {
-      console.log('🔍 ChatContainer: Message has stored visualization, returning database state');
+    if (message?.visualization_data) {
+      console.log('🔍 ChatContainer: Message has stored visualization_data, returning database state');
       return {
-        messageId,
         isGenerating: false,
-        content: 'stored_in_database',
+        content: message.visualization_data,
         hasVisualization: true,
-        isVisible: false
       };
     }
     

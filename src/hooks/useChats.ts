@@ -20,7 +20,7 @@ export interface ChatMessage {
   isUser: boolean;
   createdAt: string;
   visualization?: boolean;
-  visualizationData?: string | null;
+  visualizationData?: string;
 }
 
 export const useChats = () => {
@@ -243,7 +243,7 @@ export const useChats = () => {
       
       const { data, error } = await supabase
         .from('astra_chats')
-        .select('id, message, message_type, created_at, visualization')
+        .select('id, message, message_type, created_at, visualization, visualization_data')
         .eq('user_id', user.id)
         .eq('conversation_id', conversationId)
         .eq('mode', 'private')
@@ -261,7 +261,7 @@ export const useChats = () => {
         isUser: chat.message_type === 'user',
         createdAt: chat.created_at,
         visualization: chat.visualization || false,
-        visualizationData: chat.visualization_data || null,
+        visualizationData: chat.visualization_data,
       }));
 
       setCurrentMessages(messages);
