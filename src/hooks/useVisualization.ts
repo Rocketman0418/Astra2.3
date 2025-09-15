@@ -163,11 +163,30 @@ Return only the HTML code - no other text or formatting.`;
     }
     setMessageToHighlight(messageId);
     setCurrentVisualization(messageId);
+    
+    console.log('🎯 useVisualization: showVisualization called for messageId:', messageId);
+    console.log('🎯 useVisualization: Current visualizations state:', Object.keys(visualizations));
+    console.log('🎯 useVisualization: Visualization exists for messageId:', !!visualizations[messageId]);
+    
     setVisualizations(prev => ({
       ...prev,
       [messageId]: {
-        ...prev[messageId],
+        ...(prev[messageId] || { messageId, isGenerating: false, content: null }),
         isVisible: true
+      }
+    }));
+  }, []);
+  
+  // Add a method to manually set visualization content
+  const setVisualizationContent = useCallback((messageId: string, content: string) => {
+    console.log('🔧 useVisualization: Setting visualization content for messageId:', messageId);
+    setVisualizations(prev => ({
+      ...prev,
+      [messageId]: {
+        messageId,
+        isGenerating: false,
+        content,
+        isVisible: false
       }
     }));
   }, []);
@@ -210,6 +229,7 @@ Return only the HTML code - no other text or formatting.`;
   return {
     generateVisualization,
     showVisualization,
+    setVisualizationContent,
     hideVisualization,
     getVisualization,
     currentVisualization,

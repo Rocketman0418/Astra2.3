@@ -52,6 +52,7 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({
   const {
     generateVisualization,
     showVisualization,
+    setVisualizationContent,
     hideVisualization,
     getVisualization: getHookVisualization,
     currentVisualization,
@@ -177,24 +178,6 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({
     
     console.log('👁️ Private chat: Viewing visualization for chatId:', messageId);
     
-    // First check local state for the visualization content
-    const localState = visualizationStates[messageId];
-    console.log('👁️ Private chat: Local state for messageId:', messageId, 'exists:', !!localState, 'hasContent:', !!localState?.content);
-    
-    if (localState?.content && localState.content !== 'generated') {
-      console.log('📊 Private chat: Using local state visualization data');
-      // Update the visualization hook state
-      updateVisualizationState(messageId, {
-        messageId: messageId,
-        isGenerating: false,
-        content: localState.content,
-        hasVisualization: true,
-        isVisible: true
-      });
-      showVisualization(messageId);
-      return;
-    }
-    
     // Find the message object
     const message = messages.find(m => m.chatId === messageId || m.id === messageId);
     console.log('👁️ Private chat: Found message for viewing:', message);
@@ -203,14 +186,24 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({
     // Check if we have visualization data directly in the message
     if (message?.visualization_data) {
       console.log('📊 Private chat: Using message visualization_data directly');
-      // Store in hook state for the visualization hook to use
-      updateVisualizationState(messageId, {
-        messageId: messageId,
-        isGenerating: false,
-        content: message.visualization_data,
-        hasVisualization: true,
-        isVisible: true
-      });
+      
+      // Set the visualization content in the hook first
+      const hookVisualization = getHookVisualization(messageId);
+      if (!hookVisualization?.content) {
+        console.log('📊 Private chat: Setting visualization content in hook');
+        setVisualizationContent(messageId, message.visualization_data);
+      }
+      
+      showVisualization(messageId);
+      return;
+    }
+    
+    // Check local state for the visualization content
+    const localState = visualizationStates[messageId];
+    console.log('👁️ Private chat: Local state for messageId:', messageId, 'exists:', !!localState, 'hasContent:', !!localState?.content);
+    
+    if (localState?.content && localState.content !== 'generated') {
+      console.log('📊 Private chat: Using local state visualization data');
       showVisualization(messageId);
       return;
     }
@@ -225,7 +218,6 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({
     }
     
     console.log('❌ Private chat: No visualization data found for message:', messageId);
-  }, [showVisualization, getHookVisualization, messages, updateVisualizationState, visualizationStates]);
 
   useEffect(() => {
     // Initial scroll to bottom on component mount
