@@ -142,7 +142,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
           
           <div className="bg-gradient-to-br from-gray-700 to-gray-800 text-white rounded-2xl px-3 py-2 md:px-4 md:py-3 shadow-sm max-w-[280px] sm:max-w-md lg:max-w-lg xl:max-w-xl">
             <div className="break-words text-sm md:text-sm leading-relaxed">
-              <div className="whitespace-pre-wrap text-gray-300">{finalDisplayText}</div>
+              <div className="whitespace-pre-wrap text-gray-300">{finalText}</div>
             </div>
             
             <div className="text-xs opacity-70 mt-1 md:mt-2">
