@@ -41,16 +41,6 @@ export const Header: React.FC<HeaderProps> = ({
               <Menu className="w-6 h-6 text-white" />
             </button>
           )}
-          
-          {/* Private chat mode indicator */}
-          {chatMode === 'private' && (
-            <div className="flex items-center space-x-2 text-white">
-              <MessageSquare className="w-5 h-5" />
-              <span className="text-sm font-medium hidden sm:inline">
-                Private Chat
-              </span>
-            </div>
-          )}
         </div>
 
         {/* Center - Logo and title */}
