@@ -347,7 +347,6 @@ export const useChat = () => {
           0, // No response time for user messages
           {},
           undefined,
-          { request_time: requestStartTime },
           { 
             request_time: requestStartTime,
             is_reply: isReplyMessage,
@@ -356,7 +355,6 @@ export const useChat = () => {
           false, // visualization
           'private', // mode
           [], // mentions
-          undefined, // astraPrompt
           text.trim(), // astraPrompt (original user question, without @reply formatting)
           undefined // visualizationData
         );
