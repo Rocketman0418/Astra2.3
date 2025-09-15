@@ -73,6 +73,7 @@ export const GroupChat: React.FC<GroupChatProps> = ({ showTeamMenu = false, onCl
     sendMessage,
     updateVisualizationData,
     searchMessages,
+    fetchMessages,
   } = useGroupChat();
 
   const {
@@ -196,13 +197,16 @@ Format the summary in a clear, organized way that helps ${userName} quickly unde
       
       console.log('✅ Chat summary generated successfully');
       
-      setSummaryResult(summaryText);
+      // Ensure summaryText is not empty
+      const finalSummary = summaryText.trim() || `I apologize, but I wasn't able to generate a summary for the ${period.toLowerCase()} period. This might be due to insufficient chat data or a temporary issue. Please try again.`;
+      
+      setSummaryResult(finalSummary);
       
       // Post the summary as an Astra message in the main chat
       try {
         // Log the summary as an Astra message in the main chat
         await logChatMessage(
-          summaryText,
+          finalSummary,
           false, // isUser (Astra response)
           null, // No conversation ID for team chat
           0, // No response time for summaries
