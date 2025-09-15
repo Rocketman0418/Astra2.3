@@ -8,6 +8,7 @@ import { VisualizationLoadingView } from './VisualizationLoadingView';
 import { useGroupChat } from '../hooks/useGroupChat';
 import { useVisualization } from '../hooks/useVisualization';
 import { useAuth } from '../contexts/AuthContext';
+import { useChats } from '../hooks/useChats';
 import { supabase } from '../lib/supabase';
 import { GroupMessage as GroupMessageType } from '../types';
 import { GoogleGenerativeAI } from '@google/generative-ai';
@@ -29,6 +30,7 @@ interface GroupChatProps {
 
 export const GroupChat: React.FC<GroupChatProps> = ({ showTeamMenu = false, onCloseTeamMenu }) => {
   const { user } = useAuth();
+  const { logChatMessage } = useChats();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [inputValue, setInputValue] = useState('');
   const [users, setUsers] = useState<UserWithCurrentFlag[]>([]);
