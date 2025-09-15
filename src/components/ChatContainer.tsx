@@ -85,11 +85,15 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({
     setIsCreatingVisualization(true);
     
     // Find the actual chat ID from the message
-    let actualChatId = messageId;
+    let actualChatId: string | null = null;
     const message = messages.find(m => m.id === messageId || m.chatId === messageId);
     if (message && message.chatId) {
       actualChatId = message.chatId;
       console.log('🎯 Private chat: Using chatId:', actualChatId);
+    } else {
+      console.error('❌ Private chat: Could not find chatId for message:', messageId);
+      setIsCreatingVisualization(false);
+      return;
     }
     
     // Set generating state immediately
@@ -128,10 +132,13 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({
     console.log('👁️ Private chat: Viewing visualization for message:', messageId);
     
     // Find the actual chat ID from the message
-    let actualChatId = messageId;
+    let actualChatId: string | null = null;
     const message = messages.find(m => m.id === messageId || m.chatId === messageId);
     if (message && message.chatId) {
       actualChatId = message.chatId;
+    } else {
+      console.error('❌ Private chat: Could not find chatId for message:', messageId);
+      return;
     }
     
     // First check if we have visualization data in the database
