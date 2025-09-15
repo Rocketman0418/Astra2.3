@@ -522,7 +522,6 @@ export const MentionInput: React.FC<MentionInputProps> = ({
                     <X className="w-3 h-3 text-white" />
                   </button>
                   </div>
-                )}
               </div>
             ))}
           </div>
