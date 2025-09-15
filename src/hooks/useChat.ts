@@ -172,6 +172,17 @@ export const useChat = () => {
 
     try {
       const requestStartTime = Date.now();
+      
+      console.log('🌐 Sending request to webhook:', WEBHOOK_URL);
+      console.log('📤 Request payload:', { 
+        chatInput: text.trim(),
+        user_id: userId,
+        user_email: userEmail,
+        user_name: userName,
+        conversation_id: currentConversationId,
+        mode: 'private'
+      });
+      
       const response = await fetch(WEBHOOK_URL, {
         method: 'POST',
         headers: {
@@ -189,8 +200,18 @@ export const useChat = () => {
       const requestEndTime = Date.now();
       const responseTimeMs = requestEndTime - requestStartTime;
 
+      console.log('📥 Response status:', response.status);
+      console.log('📥 Response headers:', Object.fromEntries(response.headers.entries()));
+      
       if (!response.ok) {
-        throw new Error('Failed to send message');
+        const errorText = await response.text();
+        console.error('❌ Webhook request failed:', {
+          status: response.status,
+          statusText: response.statusText,
+          errorBody: errorText,
+          url: WEBHOOK_URL
+        });
+        throw new Error(`Webhook request failed: ${response.status} ${response.statusText}${errorText ? ` - ${errorText}` : ''}`);
       }
 
       const responseText = await response.text();
@@ -284,9 +305,20 @@ export const useChat = () => {
       }
     } catch (error) {
       console.error('Error sending message:', error);
+      
+      let errorMessage = "I'm sorry, I'm having trouble connecting right now. Please try again in a moment.";
+      
+      if (error instanceof Error) {
+        if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+          errorMessage = "Network connection error. Please check your internet connection and try again.";
+        } else if (error.message.includes('Webhook request failed')) {
+          errorMessage = `Server error: ${error.message}. Please contact support if this persists.`;
+        }
+      }
+      
       const errorMessage: Message = {
         id: `${messageId}-error`,
-        text: "I'm sorry, I'm having trouble connecting right now. Please try again in a moment.",
+        text: errorMessage,
         isUser: false,
         timestamp: new Date()
       };
