@@ -72,7 +72,8 @@ export const useChat = () => {
             id: `${dbMessage.id}-user`,
             text: dbMessage.message,
             isUser: true,
-            timestamp: new Date(dbMessage.createdAt)
+            timestamp: new Date(dbMessage.createdAt),
+            chatId: dbMessage.id
           });
         } else {
           // Add Astra response
@@ -80,7 +81,9 @@ export const useChat = () => {
             id: `${dbMessage.id}-astra`,
             text: dbMessage.message,
             isUser: false,
-            timestamp: new Date(dbMessage.createdAt)
+            timestamp: new Date(dbMessage.createdAt),
+            chatId: dbMessage.id,
+            visualization: dbMessage.visualization || false
           });
         }
       });

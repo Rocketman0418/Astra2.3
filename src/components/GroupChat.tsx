@@ -313,6 +313,15 @@ Format the summary in a clear, organized way that helps ${userName} quickly unde
     // If we have visualization data from the database, use it
     if (visualizationData) {
       console.log('📊 Using database visualization data');
+      // Store in hook state for consistent behavior
+      setVisualizationStates(prev => ({
+        ...prev,
+        [messageId]: { 
+          isGenerating: false, 
+          content: visualizationData, 
+          hasVisualization: true 
+        }
+      }));
       showVisualization(messageId);
       return;
     }

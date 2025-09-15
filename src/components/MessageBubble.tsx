@@ -100,6 +100,9 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
     ? lines.slice(0, 5).join('\n') + '...'
     : displayText;
 
+  // Check if message has visualization data stored in database
+  const hasStoredVisualization = message.visualization;
+  const hasVisualization = hasStoredVisualization || visualizationState?.hasVisualization;
   // Special styling for centered welcome message
   if (message.isCentered) {
     return (

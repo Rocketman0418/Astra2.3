@@ -111,6 +111,43 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({
   const handleViewVisualization = useCallback((messageId: string) => {
     console.log('👁️ Private chat: Viewing visualization for message:', messageId);
     
+    // First check if we have visualization data in the database
+    const message = messages.find(m => m.chatId === messageId);
+    if (message?.visualization) {
+      console.log('📊 Private chat: Message has stored visualization, fetching from database');
+      // Fetch visualization data from database
+      const fetchVisualization = async () => {
+        try {
+          const { data, error } = await supabase
+            .from('astra_chats')
+            .select('visualization_data')
+            .eq('id', messageId)
+            .single();
+
+          if (error) {
+            console.error('❌ Error fetching visualization from database:', error);
+            return;
+          }
+
+          if (data?.visualization_data) {
+            console.log('📊 Private chat: Using database visualization data');
+            // Store in hook state and show
+            updateVisualizationState(messageId, {
+              isGenerating: false,
+              content: data.visualization_data,
+              hasVisualization: true
+            });
+            showVisualization(messageId);
+          }
+        } catch (err) {
+          console.error('❌ Error in fetchVisualization:', err);
+        }
+      };
+      
+      fetchVisualization();
+      return;
+    }
+    
     // Check hook state for visualization content
     const hookVisualization = getHookVisualization(messageId);
     if (hookVisualization?.content) {
@@ -120,7 +157,7 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({
     }
     
     console.log('❌ Private chat: No visualization data found for message:', messageId);
-  }, [showVisualization, getHookVisualization]);
+  }, [showVisualization, getHookVisualization, messages, updateVisualizationState]);
 
   useEffect(() => {
     // Initial scroll to bottom on component mount

@@ -128,7 +128,7 @@ export const GroupMessage: React.FC<GroupMessageProps> = ({
 }) => {
   const isOwnMessage = message.user_id === currentUserId;
   const isAstraMessage = message.message_type === 'astra';
-  const hasVisualization = message.visualization_data;
+  const hasVisualization = message.visualization_data || visualizationState?.hasVisualization;
   const isGeneratingVisualization = visualizationState?.isGenerating || false;
   
   // Message expansion logic

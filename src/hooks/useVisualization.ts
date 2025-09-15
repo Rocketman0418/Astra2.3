@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { VisualizationState } from '../types';
+import { supabase } from '../lib/supabase';
 
 export const useVisualization = (updateVisualizationStatus?: (messageId: string, hasVisualization: boolean) => void) => {
   const [visualizations, setVisualizations] = useState<Record<string, VisualizationState>>({});
@@ -102,6 +103,24 @@ Return only the HTML code - no other text or formatting.`;
 
       console.log('✅ Visualization generated successfully');
 
+      // Save visualization to database
+      try {
+        const { error: updateError } = await supabase
+          .from('astra_chats')
+          .update({ 
+            visualization_data: cleanedContent,
+            visualization: true 
+          })
+          .eq('id', messageId);
+
+        if (updateError) {
+          console.error('❌ Error saving visualization to database:', updateError);
+        } else {
+          console.log('✅ Visualization saved to database for message:', messageId);
+        }
+      } catch (dbError) {
+        console.error('❌ Database error while saving visualization:', dbError);
+      }
       setVisualizations(prev => ({
         ...prev,
         [messageId]: {
@@ -134,7 +153,7 @@ Return only the HTML code - no other text or formatting.`;
     } finally {
       setIsGenerating(false);
     }
-  }, []);
+  }, [updateVisualizationStatus]);
 
   const showVisualization = useCallback((messageId: string) => {
     // Save current scroll position before showing visualization
