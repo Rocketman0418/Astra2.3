@@ -53,9 +53,7 @@ export const MainContainer: React.FC = () => {
         />
       )}
       
-      <div className={`flex flex-col h-screen transition-all duration-300 ${
-        sidebarOpen && chatMode === 'private' ? 'ml-80' : ''
-      }`}>
+      <div className="flex flex-col h-screen">
         <Header 
           onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
           showSidebarToggle={chatMode === 'private'}
@@ -65,7 +63,7 @@ export const MainContainer: React.FC = () => {
         />
         
         {/* Chat Mode Toggle */}
-        <div className="pt-16 flex-shrink-0">
+        <div className="pt-16">
           <ChatModeToggle mode={chatMode} onModeChange={setChatMode} />
         </div>
 

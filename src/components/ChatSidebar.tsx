@@ -76,13 +76,13 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({ isOpen, onClose, onLoa
 
       {/* Sidebar */}
       <div
-        className={`fixed top-0 left-0 h-full w-80 bg-gray-800 border-r border-gray-700 z-50 transform transition-transform duration-300 ease-in-out ${
+        className={`fixed top-0 left-0 h-full w-80 bg-gray-800 border-r border-gray-700 z-50 transform transition-transform duration-300 ease-in-out pt-16 ${
           isOpen ? 'translate-x-0' : '-translate-x-full'
-        } ${isOpen ? 'lg:relative lg:translate-x-0' : ''} pt-16`}
+        }`}
       >
         <div className="flex flex-col h-full">
           {/* Header */}
-          <div className="p-4 border-b border-gray-700 pt-20 lg:pt-4">
+          <div className="p-4 border-b border-gray-700">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center space-x-2">
                 <span className="text-2xl">🚀</span>
