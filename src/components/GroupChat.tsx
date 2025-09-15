@@ -684,7 +684,7 @@ ${finalSummary}
     return (
       <div className="flex h-full">
         {/* Team Menu Sidebar - Desktop - Match Chat History width */}
-        <div className="hidden lg:block w-80 bg-gray-800 border-r border-gray-700 flex flex-col">
+        <div className="fixed top-0 left-0 h-full w-80 bg-gray-800 border-r border-gray-700 z-50 transform transition-transform duration-300 ease-in-out pt-16 translate-x-0 lg:relative lg:top-auto lg:left-auto lg:pt-0 lg:transform-none lg:transition-none">
           <div className="p-4 border-b border-gray-700">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center space-x-2">
@@ -854,165 +854,19 @@ ${finalSummary}
           </div>
         </div>
 
-        {/* Team Menu Mobile - Top Bar */}
-        <div className="lg:hidden bg-gray-800 border-b border-gray-700 p-4 w-full">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center space-x-2">
-              <Menu className="w-5 h-5 text-blue-400" />
-              <h2 className="text-lg font-bold text-white">Team Chat Tools</h2>
-            </div>
-            <button
-              onClick={onCloseTeamMenu}
-              className="p-2 hover:bg-gray-700 rounded-lg transition-colors"
-            >
-              <X className="w-5 h-5 text-gray-400" />
-            </button>
-          </div>
 
-          {/* Mobile Tools Row */}
-          <div className="flex flex-wrap gap-2 mb-4">
-            {/* Team Members Button */}
-            <button
-              onClick={() => setShowMembersModal(true)}
-              className="flex items-center space-x-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-medium py-2 px-3 rounded-lg transition-all duration-200 text-sm"
-            >
-              <Users className="w-4 h-4" />
-              <span>Members</span>
-            </button>
+        {/* Overlay for mobile */}
+        {showTeamMenu && (
+          <div
+            className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+            onClick={onCloseTeamMenu}
+          />
+        )}
 
-            {/* Summarize Chat Button */}
-            <div className="relative">
-              <button
-                onClick={() => setShowSummaryOptions(!showSummaryOptions)}
-                disabled={isSummarizing}
-                className="flex items-center space-x-2 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 disabled:from-gray-600 disabled:to-gray-700 text-white font-medium py-2 px-3 rounded-lg transition-all duration-200 text-sm disabled:cursor-not-allowed"
-              >
-                {isSummarizing ? (
-                  <>
-                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    <span>Summarizing...</span>
-                  </>
-                ) : (
-                  <>
-                    <span>📊</span>
-                    <span>Summary</span>
-                  </>
-                )}
-              </button>
-              
-              {/* Summary Options Dropdown */}
-              {showSummaryOptions && !isSummarizing && (
-                <div className="absolute top-full left-0 mt-2 bg-gray-700 rounded-lg shadow-lg border border-gray-600 overflow-hidden z-10 min-w-32">
-                  <button
-                    onClick={() => handleSummaryRequest('24 Hours')}
-                    className="w-full text-left px-3 py-2 hover:bg-gray-600 transition-colors text-white text-sm"
-                  >
-                    24 Hours
-                  </button>
-                  <button
-                    onClick={() => handleSummaryRequest('7 Days')}
-                    className="w-full text-left px-3 py-2 hover:bg-gray-600 transition-colors text-white text-sm border-t border-gray-600"
-                  >
-                    7 Days
-                  </button>
-                  <button
-                    onClick={() => handleSummaryRequest('30 Days')}
-                    className="w-full text-left px-3 py-2 hover:bg-gray-600 transition-colors text-white text-sm border-t border-gray-600"
-                  >
-                    30 Days
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Mobile Search */}
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => handleSearch(e.target.value)}
-              placeholder="Search messages..."
-              className="w-full pl-10 pr-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition-colors text-sm"
-            />
-          </div>
-
-          {/* Mobile Summary Result */}
-          {summaryResult && (
-            <div className="mt-4 p-3 bg-gradient-to-br from-gray-700 to-gray-800 rounded-lg border border-blue-500/20">
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center space-x-2">
-                  <span className="text-blue-300 text-sm font-medium">🚀 Astra Summary</span>
-                </div>
-                <button
-                  onClick={() => setSummaryResult(null)}
-                  className="text-xs text-gray-400 hover:text-gray-300"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-              <div className="text-gray-300 text-sm max-h-32 overflow-y-auto">
-                <div className="whitespace-pre-wrap">{summaryResult}</div>
-              </div>
-            </div>
-          )}
-
-          {/* Mobile Search Results */}
-          {(searchQuery || searchResults.length > 0) && (
-            <div className="mt-4 max-h-40 overflow-y-auto">
-              {isSearching ? (
-                <div className="text-center py-4">
-                  <div className="w-6 h-6 border-2 border-blue-500/30 border-t-blue-500 rounded-full animate-spin mx-auto" />
-                  <p className="text-gray-400 text-sm mt-2">Searching...</p>
-                </div>
-              ) : searchResults.length === 0 && searchQuery ? (
-                <div className="text-center py-4">
-                  <p className="text-gray-400 text-sm">No messages found</p>
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  {searchResults.slice(0, 3).map((message) => (
-                    <div
-                      key={message.id}
-                      onClick={() => scrollToMessage(message.id)}
-                      className="p-2 rounded-lg cursor-pointer transition-all duration-200 hover:bg-gray-700/50 border border-gray-600"
-                    >
-                      <div className="flex items-start space-x-2">
-                        <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
-                          message.message_type === 'astra' 
-                            ? 'bg-gradient-to-br from-blue-600 to-purple-600 text-white'
-                            : 'bg-gray-600 text-white'
-                        }`}>
-                          {message.message_type === 'astra' ? '🚀' : message.user_name.charAt(0).toUpperCase()}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center space-x-2 mb-1">
-                            <span className="text-white text-xs font-medium">{message.user_name}</span>
-                            <span className="text-gray-500 text-xs">{formatTime(message.created_at)}</span>
-                          </div>
-                          <p className="text-gray-300 text-xs line-clamp-2">
-                            {message.message_content}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                  {searchResults.length > 3 && (
-                    <p className="text-center text-gray-400 text-xs py-2">
-                      +{searchResults.length - 3} more results
-                    </p>
-                  )}
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-
-        {/* Main Chat Area - Full width on mobile, with sidebar on desktop */}
-        <div className="flex-1 flex flex-col">
+        {/* Main Chat Area */}
+        <div className="flex-1 flex flex-col lg:ml-0">
           {/* Messages */}
-          <div className="flex-1 overflow-y-auto p-2 lg:p-4 space-y-1 chat-messages-container">
+          <div className="flex-1 overflow-y-auto p-4 space-y-1 chat-messages-container">
             {loading ? (
               <div className="flex items-center justify-center h-32">
                 <div className="text-center">
