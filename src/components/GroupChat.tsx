@@ -653,6 +653,8 @@ Format the summary in a clear, organized way that helps ${userName} quickly unde
               placeholder="Type a message... Use @astra for AI Intelligence"
               users={users}
           </div>
+            onMediaUpload={handleMediaUpload}
+          />
         </div>
       </div>
     );
