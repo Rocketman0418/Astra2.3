@@ -74,8 +74,8 @@ export const GroupChat: React.FC<GroupChatProps> = ({
     if (mediaInfo && mediaInfo.length > 0) {
       const mediaDescriptions = mediaInfo.map(media => {
         const emoji = media.type === 'image' ? '🖼️' : media.type === 'video' ? '🎥' : '📄';
-        // Include preview URL for images so they can be displayed
-        return `[${emoji} ${media.name}${media.type === 'image' && media.preview ? `|||${media.preview}` : ''}]`;
+        // Don't include preview URL in persisted data to avoid blob URL errors
+        return `[${emoji} ${media.name}]`;
       }).join(' ');
       
       // Put media first, then text content below
