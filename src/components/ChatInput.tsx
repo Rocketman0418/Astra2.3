@@ -28,7 +28,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   };
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-gray-900 border-t border-gray-700 p-3 md:p-4 safe-area-padding-bottom">
+    <div className="absolute bottom-0 left-0 right-0 bg-gray-900 border-t border-gray-700 p-3 md:p-4 safe-area-padding-bottom">
       <div className="flex items-end space-x-2 md:space-x-3 max-w-4xl mx-auto">
         <div className="flex-1 relative">
           <textarea
