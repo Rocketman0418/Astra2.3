@@ -213,7 +213,24 @@ Format the summary in a clear, organized way that helps ${userName} quickly unde
       
       const result = await model.generateContent(summaryPrompt);
       const response = await result.response;
-      const summaryText = response.text();
+      
+      console.log('🤖 Raw Gemini result:', result);
+      console.log('🤖 Raw Gemini response:', response);
+      
+      let summaryText;
+      try {
+        summaryText = response.text();
+        console.log('🤖 Extracted text from response:', summaryText);
+      } catch (textError) {
+        console.error('❌ Error extracting text from Gemini response:', textError);
+        throw new Error(`Failed to extract text from Gemini response: ${textError.message}`);
+      }
+      
+      if (!summaryText || summaryText.trim().length === 0) {
+        console.error('❌ Gemini returned empty response');
+        console.log('🤖 Full response object:', JSON.stringify(response, null, 2));
+        throw new Error('Gemini API returned an empty response');
+      }
       
      console.log('✅ Gemini response received');
      console.log('📄 Summary length:', summaryText.length);
@@ -221,8 +238,7 @@ Format the summary in a clear, organized way that helps ${userName} quickly unde
      
       console.log('✅ Chat summary generated successfully');
       
-      // Ensure summaryText is not empty
-      const finalSummary = summaryText.trim() || `I apologize, but I wasn't able to generate a summary for the ${period.toLowerCase()} period. This might be due to insufficient chat data or a temporary issue. Please try again.`;
+      const finalSummary = summaryText.trim();
       
      console.log('✅ Final summary length:', finalSummary.length);
       setSummaryResult(finalSummary);
