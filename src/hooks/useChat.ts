@@ -5,7 +5,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import { v4 as uuidv4 } from 'uuid';
 
-const WEBHOOK_URL = 'https://healthrocket.app.n8n.cloud/webhook/8ec404be-7f51-47c8-8faf-0d139bd4c5e9/chat';
+const WEBHOOK_URL = import.meta.env.VITE_N8N_WEBHOOK_URL;
 
 export const useChat = () => {
   const { logChatMessage, currentMessages, currentConversationId, loading: chatsLoading, loadConversation, startNewConversation: chatsStartNewConversation, updateVisualizationStatus, conversations, hasInitialized } = useChats();
@@ -137,6 +137,19 @@ export const useChat = () => {
 
   const sendMessage = useCallback(async (text: string) => {
     if (!text.trim() || isLoading) return;
+
+    // Check if webhook URL is configured
+    if (!WEBHOOK_URL) {
+      console.error('N8N webhook URL not configured');
+      const errorMessage: Message = {
+        id: `${uuidv4()}-error`,
+        text: "Configuration error: N8N webhook URL not set. Please check your environment variables.",
+        isUser: false,
+        timestamp: new Date()
+      };
+      setMessages(prev => [...prev, errorMessage]);
+      return;
+    }
 
     // Get user information
     const userId = user?.id || '';

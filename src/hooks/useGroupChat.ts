@@ -7,7 +7,7 @@ import { GroupMessage } from '../types';
 type GroupMessageRow = Database['public']['Tables']['group_messages']['Row'];
 type GroupMessageInsert = Database['public']['Tables']['group_messages']['Insert'];
 
-const WEBHOOK_URL = 'https://healthrocket.app.n8n.cloud/webhook/8ec404be-7f51-47c8-8faf-0d139bd4c5e9/chat';
+const WEBHOOK_URL = import.meta.env.VITE_N8N_WEBHOOK_URL;
 
 export const useGroupChat = () => {
   const { user } = useAuth();
@@ -110,6 +110,13 @@ export const useGroupChat = () => {
   // Send a group message
   const sendMessage = useCallback(async (content: string) => {
     if (!user || !content.trim()) return;
+
+    // Check if webhook URL is configured
+    if (!WEBHOOK_URL) {
+      console.error('N8N webhook URL not configured');
+      setError('Configuration error: N8N webhook URL not set. Please check your environment variables.');
+      return;
+    }
 
     const mentions = parseMentions(content);
     const userName = await getUserName();
