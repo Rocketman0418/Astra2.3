@@ -46,7 +46,6 @@ export const GroupChat: React.FC<GroupChatProps> = ({ showTeamMenu = false, onCl
   const [isCreatingVisualization, setIsCreatingVisualization] = useState(false);
   const [showMembersModal, setShowMembersModal] = useState(false);
   const [isCurrentUserAdmin, setIsCurrentUserAdmin] = useState(false);
-  const [onSwitchToPrivateChat, setOnSwitchToPrivateChat] = useState<((conversationId: string) => void) | null>(null);
 
   // Get user's display name
   const getUserName = useCallback(async (): Promise<string> => {
