@@ -79,30 +79,40 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({
   // Handle visualization creation for private chat
   const handleCreateVisualization = useCallback(async (messageId: string, messageContent: string) => {
     console.log('🎯 Private chat: Starting visualization generation for message:', messageId);
+    console.log('🎯 Private chat: Message content length:', messageContent.length);
+    console.log('🎯 Private chat: Available messages:', messages.map(m => ({ id: m.id, chatId: m.chatId })));
     
     setIsCreatingVisualization(true);
     
+    // Find the actual chat ID from the message
+    let actualChatId = messageId;
+    const message = messages.find(m => m.id === messageId || m.chatId === messageId);
+    if (message && message.chatId) {
+      actualChatId = message.chatId;
+      console.log('🎯 Private chat: Using chatId:', actualChatId);
+    }
+    
     // Set generating state immediately
-    updateVisualizationState(messageId, { isGenerating: true, content: null });
+    updateVisualizationState(actualChatId, { isGenerating: true, content: null });
 
     try {
-      await generateVisualization(messageId, messageContent);
+      await generateVisualization(actualChatId, messageContent);
       
-      console.log('✅ Private chat: Visualization generation completed for message:', messageId);
+      console.log('✅ Private chat: Visualization generation completed for message:', actualChatId);
       
       // Set completion state
       setTimeout(() => {
-        updateVisualizationState(messageId, { 
+        updateVisualizationState(actualChatId, { 
           isGenerating: false, 
           content: 'generated', 
           hasVisualization: true 
         });
-        console.log('✅ Private chat: Updated visualization state for message:', messageId);
+        console.log('✅ Private chat: Updated visualization state for message:', actualChatId);
       }, 100);
       
     } catch (error) {
       console.error('❌ Private chat: Error during visualization generation:', error);
-      updateVisualizationState(messageId, { 
+      updateVisualizationState(actualChatId, { 
         isGenerating: false, 
         content: null, 
         hasVisualization: false 
@@ -117,8 +127,14 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({
   const handleViewVisualization = useCallback((messageId: string) => {
     console.log('👁️ Private chat: Viewing visualization for message:', messageId);
     
+    // Find the actual chat ID from the message
+    let actualChatId = messageId;
+    const message = messages.find(m => m.id === messageId || m.chatId === messageId);
+    if (message && message.chatId) {
+      actualChatId = message.chatId;
+    }
+    
     // First check if we have visualization data in the database
-    const message = messages.find(m => m.chatId === messageId);
     if (message?.visualization) {
       console.log('📊 Private chat: Message has stored visualization, fetching from database');
       // Fetch visualization data from database
@@ -128,7 +144,7 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({
           const { data, error } = await supabase
             .from('astra_chats')
             .select('visualization_data')
-            .eq('id', messageId)
+            .eq('id', actualChatId)
             .single();
 
           if (error) {
@@ -139,12 +155,12 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({
           if (data?.visualization_data) {
             console.log('📊 Private chat: Using database visualization data');
             // Store in hook state and show
-            updateVisualizationState(messageId, {
+            updateVisualizationState(actualChatId, {
               isGenerating: false,
               content: data.visualization_data,
               hasVisualization: true
             });
-            showVisualization(messageId);
+            showVisualization(actualChatId);
           }
         } catch (err) {
           console.error('❌ Error in fetchVisualization:', err);
@@ -156,14 +172,14 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({
     }
     
     // Check hook state for visualization content
-    const hookVisualization = getHookVisualization(messageId);
+    const hookVisualization = getHookVisualization(actualChatId);
     if (hookVisualization?.content) {
       console.log('📊 Private chat: Using hook visualization data');
-      showVisualization(messageId);
+      showVisualization(actualChatId);
       return;
     }
     
-    console.log('❌ Private chat: No visualization data found for message:', messageId);
+    console.log('❌ Private chat: No visualization data found for message:', actualChatId);
   }, [showVisualization, getHookVisualization, messages, updateVisualizationState]);
 
   useEffect(() => {
