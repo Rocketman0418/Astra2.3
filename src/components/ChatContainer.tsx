@@ -175,60 +175,42 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({
   const handleViewVisualization = useCallback((messageId: string) => {
     console.log('👁️ Private chat: Viewing visualization for chatId:', messageId);
     
-    // messageId is already the chatId from MessageBubble
-    const actualChatId = messageId;
+    // Find the message object
+    const message = messages.find(m => m.chatId === messageId || m.id === messageId);
+    console.log('👁️ Private chat: Found message for viewing:', message);
     
-    // Find the message object for additional checks
-    const message = messages.find(m => m.chatId === actualChatId);
-    
-    // First check if we have visualization data in the database
-    if (message?.hasStoredVisualization) {
-      console.log('📊 Private chat: Message has stored visualization, fetching from database');
-      // Fetch visualization data from database
-      const fetchVisualization = async () => {
-        try {
-          const { supabase } = await import('../lib/supabase');
-          const { data, error } = await supabase
-            .from('astra_chats')
-            .select('visualization_data')
-            .eq('id', actualChatId)
-            .single();
-
-          if (error) {
-            console.error('❌ Error fetching visualization from database:', error);
-            return;
-          }
-
-          if (data?.visualization_data) {
-            console.log('📊 Private chat: Using database visualization data');
-            // Store in hook state and show
-            updateVisualizationState(actualChatId, {
-              messageId: actualChatId,
-              isGenerating: false,
-              content: data.visualization_data,
-              hasVisualization: true,
-              isVisible: false
-            });
-            showVisualization(actualChatId);
-          }
-        } catch (err) {
-          console.error('❌ Error in fetchVisualization:', err);
-        }
-      };
-      
-      fetchVisualization();
+    // Check if we have visualization data directly in the message
+    if (message?.visualization_data) {
+      console.log('📊 Private chat: Using message visualization_data directly');
+      // Store in hook state for the visualization hook to use
+      updateVisualizationState(messageId, {
+        messageId: messageId,
+        isGenerating: false,
+        content: message.visualization_data,
+        hasVisualization: true,
+        isVisible: false
+      });
+      showVisualization(messageId);
       return;
     }
     
     // Check hook state for visualization content
-    const hookVisualization = getHookVisualization(actualChatId);
+    const hookVisualization = getHookVisualization(messageId);
     if (hookVisualization?.content) {
       console.log('📊 Private chat: Using hook visualization data');
-      showVisualization(actualChatId);
+      showVisualization(messageId);
       return;
     }
     
-    console.log('❌ Private chat: No visualization data found for message:', actualChatId);
+    // Check local state for visualization content
+    const localState = visualizationStates[messageId];
+    if (localState?.content && localState.content !== 'generated') {
+      console.log('📊 Private chat: Using local state visualization data');
+      showVisualization(messageId);
+      return;
+    }
+    
+    console.log('❌ Private chat: No visualization data found for message:', messageId);
   }, [showVisualization, getHookVisualization, messages, updateVisualizationState]);
 
   useEffect(() => {
