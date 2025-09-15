@@ -110,6 +110,9 @@ export const GroupChat: React.FC<GroupChatProps> = ({ showTeamMenu = false, onCl
     try {
       const userName = await getUserName();
       
+     console.log('🔍 Starting summary generation for period:', period);
+     console.log('🔍 User:', userName);
+     
       // Calculate date range
       const now = new Date();
       const periodHours = {
@@ -119,6 +122,8 @@ export const GroupChat: React.FC<GroupChatProps> = ({ showTeamMenu = false, onCl
       };
       const startDate = new Date(now.getTime() - (periodHours[period] * 60 * 60 * 1000));
       
+     console.log('🔍 Date range:', { startDate: startDate.toISOString(), endDate: now.toISOString() });
+     
       // Fetch team chat messages from the specified time period
       const { data: chatMessages, error } = await supabase
         .from('astra_chats')
@@ -135,15 +140,21 @@ export const GroupChat: React.FC<GroupChatProps> = ({ showTeamMenu = false, onCl
         .gte('created_at', startDate.toISOString())
         .order('created_at', { ascending: true });
 
+     console.log('🔍 Database query result:', { error, messageCount: chatMessages?.length || 0 });
+     
       if (error) {
+       console.error('❌ Database error:', error);
         throw new Error('Failed to fetch chat messages');
       }
       
       if (!chatMessages || chatMessages.length === 0) {
+       console.log('⚠️ No messages found for the specified period');
         setSummaryResult(`No team chat messages found in the last ${period.toLowerCase()}.`);
         return;
       }
 
+     console.log('📝 Found', chatMessages.length, 'messages to summarize');
+     
       // Format messages for Gemini
       const formattedMessages = chatMessages.map(msg => {
         const timestamp = new Date(msg.created_at).toLocaleString();
@@ -156,12 +167,17 @@ export const GroupChat: React.FC<GroupChatProps> = ({ showTeamMenu = false, onCl
         }
       }).join('\n\n');
 
+     console.log('📝 Formatted messages length:', formattedMessages.length);
+     console.log('📝 Sample formatted message:', formattedMessages.substring(0, 200) + '...');
+     
       // Get API key and initialize Gemini
       const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
       if (!apiKey) {
+       console.error('❌ Gemini API key not found');
         throw new Error('Gemini API key not found');
       }
 
+     console.log('🤖 Initializing Gemini API...');
       const genAI = new GoogleGenerativeAI(apiKey);
       const model = genAI.getGenerativeModel({ 
         model: 'gemini-2.5-flash',
@@ -189,49 +205,29 @@ Please create a personalized summary that includes:
 
 Format the summary in a clear, organized way that helps ${userName} quickly understand what they may have missed and what's important for them to know.`;
 
+     console.log('🤖 Sending request to Gemini...');
+     console.log('🤖 Prompt length:', summaryPrompt.length);
+     
       console.log('🤖 Generating chat summary with Gemini...');
       
       const result = await model.generateContent(summaryPrompt);
       const response = await result.response;
       const summaryText = response.text();
       
+     console.log('✅ Gemini response received');
+     console.log('📄 Summary length:', summaryText.length);
+     console.log('📄 Summary preview:', summaryText.substring(0, 200) + '...');
+     
       console.log('✅ Chat summary generated successfully');
       
       // Ensure summaryText is not empty
       const finalSummary = summaryText.trim() || `I apologize, but I wasn't able to generate a summary for the ${period.toLowerCase()} period. This might be due to insufficient chat data or a temporary issue. Please try again.`;
       
+     console.log('✅ Final summary length:', finalSummary.length);
       setSummaryResult(finalSummary);
-      
-      // Post the summary as an Astra message in the main chat
-      try {
-        // Log the summary as an Astra message in the main chat
-        await logChatMessage(
-          finalSummary,
-          false, // isUser (Astra response)
-          null, // No conversation ID for team chat
-          0, // No response time for summaries
-          {}, // No tokens used
-          'gemini-2.5-flash', // Model used
-          { 
-            team_chat: true,
-            message_type: 'astra',
-            summary_type: period,
-            generated_by: userName
-          },
-          false, // visualization
-          'team', // mode
-          [], // mentions
-          `Generate a ${period.toLowerCase()} summary of team chat activity`, // astraPrompt
-          undefined // visualizationData
-        );
-        
-        // Refresh messages to show the new summary
-        await fetchMessages();
-      } catch (err) {
-        console.error('Error posting summary to chat:', err);
-      }
     } catch (error) {
-      console.error('Error getting chat summary:', error);
+      console.error('❌ Error getting chat summary:', error);
+      console.error('❌ Error details:', error.message, error.stack);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       setSummaryResult(`I'm sorry, I'm having trouble generating the summary right now. Error: ${errorMessage}. Please try again in a moment.`);
     } finally {
