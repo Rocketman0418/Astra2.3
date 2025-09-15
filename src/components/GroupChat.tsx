@@ -198,14 +198,10 @@ Here are the team chat messages in chronological order:
 
 ${formattedMessages}
 
-Please create a personalized summary that includes:
-- Key topics and discussions that occurred
-- Important decisions or action items mentioned
-- Notable insights or information shared by Astra
-- Any mentions of ${userName} or topics relevant to them
 - Overall team activity and engagement patterns
 
 Format the summary in a clear, organized way that helps ${userName} quickly understand what they may have missed and what's important for them to know.`;
+      const summaryPrompt = `Please provide a brief summary of the team chat activity from the last ${period.toLowerCase()}.
 
      console.log('🤖 Sending request to Gemini...');
      console.log('🤖 Prompt length:', summaryPrompt.length);
