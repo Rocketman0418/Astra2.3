@@ -10,6 +10,31 @@ interface GroupMessageProps {
   visualizationState?: any;
 }
 
+// Helper function to extract media info from message content
+const extractMediaInfo = (content: string) => {
+  const mediaRegex = /\[(🖼️|🎥|📄)\s+([^\]]+)\]/g;
+  const mediaItems: Array<{type: string, name: string, emoji: string, preview?: string}> = [];
+  let match;
+  
+  while ((match = mediaRegex.exec(content)) !== null) {
+    const emoji = match[1];
+    const name = match[2];
+    const type = emoji === '🖼️' ? 'image' : emoji === '🎥' ? 'video' : 'pdf';
+    
+    // Extract preview URL if it exists (format: filename|||previewUrl)
+    const parts = name.split('|||');
+    const fileName = parts[0];
+    const previewUrl = parts[1];
+    
+    mediaItems.push({ type, name: fileName, emoji, preview: previewUrl });
+  }
+  
+  return {
+    mediaItems,
+    textContent: content.replace(mediaRegex, '').trim()
+  };
+};
+
 const formatMessageContent = (content: string, mentions: string[], isAstraMessage: boolean = false): JSX.Element => {
   if (isAstraMessage) {
     // Use the same formatting logic as private chat for Astra messages
@@ -131,13 +156,17 @@ export const GroupMessage: React.FC<GroupMessageProps> = ({
   const hasVisualization = message.visualization_data;
   const isGeneratingVisualization = visualizationState?.isGenerating || false;
   
+  // Extract media info from message content
+  const { mediaItems, textContent } = extractMediaInfo(message.message_content);
+  const hasMedia = mediaItems.length > 0;
+  
   // Message expansion logic
   const [isExpanded, setIsExpanded] = React.useState(false);
-  const isLongMessage = message.message_content.length > 300;
+  const isLongMessage = textContent.length > 300;
   const shouldTruncate = isLongMessage && !isExpanded;
   const displayText = shouldTruncate 
-    ? message.message_content.substring(0, 300) + '...'
-    : message.message_content;
+    ? textContent.substring(0, 300) + '...'
+    : textContent;
 
   const lines = displayText.split('\n');
   const shouldShowMore = lines.length > 5 && !isExpanded;
@@ -218,10 +247,91 @@ export const GroupMessage: React.FC<GroupMessageProps> = ({
           )}
 
           <div className="break-words text-sm leading-relaxed">
-            {isOwnMessage && !isAstraMessage ? (
-              <div className="whitespace-pre-wrap">{finalText}</div>
-            ) : (
-              formatMessageContent(finalText, message.mentions, isAstraMessage)
+            {/* Media content */}
+            {hasMedia && (
+              <div className="space-y-3 mb-3">
+                {mediaItems.map((media, index) => (
+                  <div key={index} className="rounded-lg overflow-hidden bg-gray-600/20 border border-gray-600/30">
+                    {media.type === 'image' && media.preview ? (
+                      <div className="relative group cursor-pointer">
+                        <img
+                          src={media.preview}
+                          alt={media.name}
+                          className="w-full max-w-sm h-auto max-h-48 object-cover rounded-lg hover:opacity-90 transition-opacity"
+                          onClick={() => window.open(media.preview, '_blank')}
+                          onError={(e) => {
+                            console.error('❌ Image failed to load:', media.preview);
+                            console.log('🔍 Attempting to load image from URL:', media.preview);
+                            // Fallback to filename display
+                            const target = e.target as HTMLImageElement;
+                            target.style.display = 'none';
+                            const fallback = target.nextElementSibling as HTMLElement;
+                            if (fallback) fallback.style.display = 'block';
+                          }}
+                          onLoad={() => {
+                            console.log('✅ Image loaded successfully:', media.preview);
+                          }}
+                        />
+                        <div className="hidden p-3 text-center bg-gray-700 rounded-lg">
+                          <div className="text-2xl mb-2">🖼️</div>
+                          <div className="text-sm text-white">{media.name}</div>
+                          <div className="text-xs text-gray-400 mt-1">
+                            Image failed to load
+                            <br />
+                            <button 
+                              onClick={() => window.open(media.preview, '_blank')}
+                              className="text-blue-300 hover:text-blue-200 underline mt-1"
+                            >
+                              Try opening directly
+                            </button>
+                          </div>
+                        </div>
+                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors rounded-lg flex items-center justify-center">
+                          <div className="opacity-0 group-hover:opacity-100 transition-opacity bg-black/70 text-white px-3 py-2 rounded-lg text-sm font-medium">
+                            Click to view full size
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex items-center space-x-3 p-3">
+                        <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${
+                          media.type === 'video' ? 'bg-purple-500/20' : 'bg-blue-500/20'
+                        }`}>
+                          <span className="text-2xl">{media.emoji}</span>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-medium text-gray-200 truncate">
+                            {media.name}
+                          </div>
+                          <div className="text-xs text-gray-400">
+                            {media.type === 'image' ? 'Image file' : media.type === 'video' ? 'Video file' : 'PDF file'}
+                            {media.type === 'image' && ' • Preview expired'}
+                          </div>
+                        </div>
+                        {media.preview && (
+                          <button 
+                            onClick={() => window.open(media.preview, '_blank')}
+                            className="text-xs text-blue-300 hover:text-blue-200 underline px-2 py-1 rounded"
+                          >
+                            View
+                          </button>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+            
+            {/* Text content - now appears below media */}
+            {finalText && (
+              <div className="mb-2">
+                {isOwnMessage && !isAstraMessage ? (
+                  <div className="whitespace-pre-wrap">{finalText}</div>
+                ) : (
+                  formatMessageContent(finalText, message.mentions, isAstraMessage)
+                )}
+              </div>
             )}
           </div>
           
