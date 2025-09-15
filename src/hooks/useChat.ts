@@ -8,7 +8,7 @@ import { v4 as uuidv4 } from 'uuid';
 const WEBHOOK_URL = 'https://healthrocket.app.n8n.cloud/webhook/8ec404be-7f51-47c8-8faf-0d139bd4c5e9/chat';
 
 export const useChat = () => {
-  const { logChatMessage, currentMessages, currentConversationId, loading: chatsLoading, loadConversation, startNewConversation: chatsStartNewConversation, updateVisualizationStatus } = useChats();
+  const { logChatMessage, currentMessages, currentConversationId, loading: chatsLoading, loadConversation, startNewConversation: chatsStartNewConversation, updateVisualizationStatus, conversations, hasInitialized } = useChats();
   const [visualizationStates, setVisualizationStates] = useState<Record<string, any>>({});
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -22,6 +22,7 @@ export const useChat = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [inputValue, setInputValue] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [hasLoadedConversation, setHasLoadedConversation] = useState(false);
 
   // Convert database messages to UI messages
   useEffect(() => {
@@ -34,36 +35,32 @@ export const useChat = () => {
     if (currentMessages.length > 0) {
       const uiMessages: Message[] = [];
       
-      currentMessages.forEach((dbMessage) => {
-        // Add user message
-        uiMessages.push({
-          id: `${dbMessage.id}-user`,
-          text: dbMessage.message,
-          isUser: true,
-          timestamp: new Date(dbMessage.createdAt)
-        });
-        
-        // Add Astra response
-        uiMessages.push({
-          id: `${dbMessage.id}-astra`,
-          text: dbMessage.message,
-          isUser: false,
-          timestamp: new Date(dbMessage.createdAt)
-        });
+      currentMessages.forEach((dbMessage, index) => {
+        if (dbMessage.isUser) {
+          // Add user message
+          uiMessages.push({
+            id: `${dbMessage.id}-user`,
+            text: dbMessage.message,
+            isUser: true,
+            timestamp: new Date(dbMessage.createdAt)
+          });
+        } else {
+          // Add Astra response
+          uiMessages.push({
+            id: `${dbMessage.id}-astra`,
+            text: dbMessage.message,
+            isUser: false,
+            timestamp: new Date(dbMessage.createdAt)
+          });
+        }
       });
       
       console.log('useChat: Setting messages from database', { uiMessagesLength: uiMessages.length });
       setMessages([
-        {
-          id: 'welcome',
-          text: "Welcome back! Here's your conversation history.",
-          isUser: false,
-          timestamp: new Date(),
-          isCentered: true
-        },
         ...uiMessages
       ]);
-    } else if (currentConversationId) {
+      setHasLoadedConversation(true);
+    } else if (currentConversationId && !hasLoadedConversation) {
       // Reset to welcome message for new conversations
       console.log('useChat: Resetting to welcome message');
       setMessages([
@@ -76,7 +73,19 @@ export const useChat = () => {
         }
       ]);
     }
-  }, [currentMessages, currentConversationId]);
+  }, [currentMessages, currentConversationId, hasLoadedConversation]);
+
+  // Load the most recent conversation when component mounts
+  useEffect(() => {
+    if (user && hasInitialized && !hasLoadedConversation && !currentConversationId) {
+      // If there are existing conversations, load the most recent one
+      if (conversations.length > 0) {
+        console.log('useChat: Loading most recent conversation:', conversations[0].id);
+        loadConversation(conversations[0].id);
+      }
+      setHasLoadedConversation(true);
+    }
+  }, [user, hasInitialized, conversations, hasLoadedConversation, currentConversationId, loadConversation]);
 
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });

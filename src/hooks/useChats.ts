@@ -29,6 +29,7 @@ export const useChats = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [userProfile, setUserProfile] = useState<{ name: string | null } | null>(null);
+  const [hasInitialized, setHasInitialized] = useState(false);
 
   // Fetch user profile data from public.users table
   const fetchUserProfile = useCallback(async () => {
@@ -332,11 +333,9 @@ export const useChats = () => {
   useEffect(() => {
     if (user) {
       fetchConversations();
-      if (!currentConversationId) {
-        createNewConversation();
-      }
+      setHasInitialized(true);
     }
-  }, [user, fetchConversations, currentConversationId, createNewConversation]);
+  }, [user, fetchConversations]);
 
   return {
     conversations,
@@ -352,5 +351,6 @@ export const useChats = () => {
     startNewConversation,
     updateVisualizationStatus,
     setError,
+    hasInitialized,
   };
 };
