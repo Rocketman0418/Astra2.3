@@ -211,7 +211,24 @@ export const useChat = () => {
           errorBody: errorText,
           url: WEBHOOK_URL
         });
-        throw new Error(`Webhook request failed: ${response.status} ${response.statusText}${errorText ? ` - ${errorText}` : ''}`);
+        
+        // Try to parse error response and extract meaningful message
+        let errorMessage = `Webhook request failed: ${response.status} ${response.statusText}`;
+        if (errorText) {
+          try {
+            const errorJson = JSON.parse(errorText);
+            if (errorJson.message) {
+              errorMessage = `Server error: ${errorJson.message}`;
+            } else {
+              errorMessage += ` - ${errorText}`;
+            }
+          } catch (parseError) {
+            // If not JSON, use raw error text
+            errorMessage += ` - ${errorText}`;
+          }
+        }
+        
+        throw new Error(errorMessage);
       }
 
       const responseText = await response.text();
