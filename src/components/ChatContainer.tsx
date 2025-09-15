@@ -39,7 +39,10 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({
     currentConversationId,
     updateVisualizationStatus,
     getVisualizationState,
-    updateVisualizationState: hookUpdateVisualizationState
+    updateVisualizationState: hookUpdateVisualizationState,
+    replyState,
+    startReply,
+    cancelReply
   } = useChat();
   
   const {
@@ -286,6 +289,7 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({
                 onToggleFavorite={toggleFavorite}
                 isFavorited={isFavorited(message.id)}
                 visualizationState={getLocalVisualizationState(message.chatId || message.id)}
+                onReply={startReply}
               />
             </div>
           ))}
@@ -304,6 +308,8 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({
           disabled={isLoading}
           favorites={favorites}
           onRemoveFavorite={removeFromFavorites}
+         replyState={replyState}
+         onCancelReply={cancelReply}
         />
       </div>
     </div>

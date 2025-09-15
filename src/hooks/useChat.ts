@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { Message } from '../types';
+import { Message, ReplyState } from '../types';
 import { useChats } from './useChats';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
@@ -25,6 +25,11 @@ export const useChat = () => {
   const [inputValue, setInputValue] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [hasLoadedConversation, setHasLoadedConversation] = useState(false);
+  const [replyState, setReplyState] = useState<ReplyState>({
+    isReplying: false,
+    messageId: null,
+    messageSnippet: null
+  });
 
   // Fetch user profile when user changes
   useEffect(() => {
@@ -80,6 +85,9 @@ export const useChat = () => {
             text: dbMessage.message,
             isUser: true,
             timestamp: new Date(dbMessage.createdAt),
+            messageType: 'user',
+            isReply: dbMessage.message.startsWith('@reply '),
+            replyToId: dbMessage.message.startsWith('@reply ') ? dbMessage.message.split(' ')[1] : undefined
           });
         } else {
           // Add Astra response
@@ -91,7 +99,8 @@ export const useChat = () => {
             chatId: dbMessage.id,
             visualization: !!dbMessage.visualizationData,
             hasStoredVisualization: !!dbMessage.visualizationData,
-            visualization_data: dbMessage.visualizationData
+            visualization_data: dbMessage.visualizationData,
+            messageType: 'astra'
           });
           
           console.log('🔍 useChat: Added Astra message with visualization data:', {
@@ -167,6 +176,16 @@ export const useChat = () => {
   const sendMessage = useCallback(async (text: string) => {
     if (!text.trim() || isLoading) return;
 
+    let messageToSend = text.trim();
+    let isReplyMessage = false;
+    
+    // Check if we're in reply mode
+    if (replyState.isReplying && replyState.messageId) {
+      messageToSend = `@reply ${replyState.messageId} ${text.trim()}`;
+      isReplyMessage = true;
+      console.log('🔄 Sending reply message:', messageToSend);
+    }
+
     // Check if webhook URL is configured
     if (!WEBHOOK_URL) {
       console.error('N8N webhook URL not configured');
@@ -189,22 +208,34 @@ export const useChat = () => {
     const startTime = Date.now();
     const userMessage: Message = {
       id: `${messageId}-user`,
-      text: text.trim(),
+      text: messageToSend,
       isUser: true,
-      timestamp: new Date()
+      timestamp: new Date(),
+      messageType: 'user',
+      isReply: isReplyMessage,
+      replyToId: replyState.isReplying ? replyState.messageId : undefined
     };
 
     // Add user message to UI immediately
     setMessages(prev => [...prev, userMessage]);
     setInputValue('');
     setIsLoading(true);
+    
+    // Clear reply state after sending
+    if (replyState.isReplying) {
+      setReplyState({
+        isReplying: false,
+        messageId: null,
+        messageSnippet: null
+      });
+    }
 
     try {
       const requestStartTime = Date.now();
       
       console.log('🌐 Sending request to webhook:', WEBHOOK_URL);
       console.log('📤 Request payload:', { 
-        chatInput: text.trim(),
+        chatInput: messageToSend,
         user_id: userId,
         user_email: userEmail,
         user_name: userName,
@@ -218,7 +249,7 @@ export const useChat = () => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ 
-          chatInput: text.trim(),
+          chatInput: messageToSend,
           user_id: userId,
           user_email: userEmail,
           user_name: userName,
@@ -297,7 +328,8 @@ export const useChat = () => {
         id: `${messageId}-astra`,
         text: messageText,
         isUser: false,
-        timestamp: new Date()
+        timestamp: new Date(),
+        messageType: 'astra'
       };
 
       // Add Astra response to UI immediately
@@ -309,17 +341,23 @@ export const useChat = () => {
       try {
         // Log user message
         const userChatId = await logChatMessage(
-          text.trim(),
+          messageToSend,
           true, // isUser
           currentConversationId || undefined,
           0, // No response time for user messages
           {},
           undefined,
           { request_time: requestStartTime },
+          { 
+            request_time: requestStartTime,
+            is_reply: isReplyMessage,
+            reply_to_id: replyState.isReplying ? replyState.messageId : undefined
+          },
           false, // visualization
           'private', // mode
           [], // mentions
           undefined, // astraPrompt
+          text.trim(), // astraPrompt (original user question, without @reply formatting)
           undefined // visualizationData
         );
         
@@ -378,14 +416,38 @@ export const useChat = () => {
         id: `${messageId}-error`,
         text: errorMessage,
         isUser: false,
-        timestamp: new Date()
+        timestamp: new Date(),
+        messageType: 'system'
       };
       setMessages(prev => [...prev, errorMessageObj]);
     } finally {
       setIsLoading(false);
     }
-  }, [isLoading, logChatMessage, currentConversationId, updateVisualizationStatus, user, userProfile]);
+  }, [isLoading, logChatMessage, currentConversationId, updateVisualizationStatus, user, userProfile, replyState]);
 
+  const startReply = useCallback((messageId: string, messageText: string) => {
+    const snippet = messageText.length > 100 
+      ? messageText.substring(0, 100) + '...'
+      : messageText;
+    
+    setReplyState({
+      isReplying: true,
+      messageId,
+      messageSnippet: snippet
+    });
+    
+    console.log('🔄 Started reply to message:', messageId);
+  }, []);
+
+  const cancelReply = useCallback(() => {
+    setReplyState({
+      isReplying: false,
+      messageId: null,
+      messageSnippet: null
+    });
+    
+    console.log('❌ Cancelled reply');
+  }, []);
   const toggleMessageExpansion = useCallback((messageId: string) => {
     setMessages(prev => 
       prev.map(msg => 
@@ -430,6 +492,9 @@ export const useChat = () => {
     loadConversation,
     startNewConversation,
     getVisualizationState,
-    updateVisualizationState
+    updateVisualizationState,
+    replyState,
+    startReply,
+    cancelReply
   };
 };

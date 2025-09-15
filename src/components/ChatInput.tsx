@@ -1,7 +1,7 @@
 import React, { KeyboardEvent } from 'react';
-import { Send, Star } from 'lucide-react';
+import { Send, Star, X } from 'lucide-react';
 import { FavoritesDropdown } from './FavoritesDropdown';
-import { FavoriteMessage } from '../types';
+import { FavoriteMessage, ReplyState } from '../types';
 
 interface ChatInputProps {
   value: string;
@@ -10,6 +10,8 @@ interface ChatInputProps {
   disabled: boolean;
   favorites?: FavoriteMessage[];
   onRemoveFavorite?: (messageId: string) => void;
+  replyState?: ReplyState;
+  onCancelReply?: () => void;
 }
 
 export const ChatInput: React.FC<ChatInputProps> = ({
@@ -18,7 +20,9 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   onSend,
   disabled,
   favorites = [],
-  onRemoveFavorite
+  onRemoveFavorite,
+  replyState,
+  onCancelReply
 }) => {
   const handleKeyPress = (e: KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -39,6 +43,30 @@ export const ChatInput: React.FC<ChatInputProps> = ({
 
   return (
     <div className="bg-gray-900 border-t border-gray-700 p-3 md:p-4 safe-area-padding-bottom">
+      {/* Reply Preview */}
+      {replyState?.isReplying && (
+        <div className="mb-3 bg-gray-800 border border-gray-600 rounded-lg p-3">
+          <div className="flex items-start justify-between">
+            <div className="flex-1">
+              <div className="flex items-center space-x-2 mb-1">
+                <Reply className="w-4 h-4 text-blue-400" />
+                <span className="text-sm font-medium text-blue-400">Replying to:</span>
+              </div>
+              <p className="text-sm text-gray-300 line-clamp-2">
+                {replyState.messageSnippet}
+              </p>
+            </div>
+            <button
+              onClick={onCancelReply}
+              className="p-1 hover:bg-gray-700 rounded transition-colors ml-2"
+              title="Cancel reply"
+            >
+              <X className="w-4 h-4 text-gray-400" />
+            </button>
+          </div>
+        </div>
+      )}
+      
       <div className="flex items-end space-x-2 md:space-x-3 max-w-4xl mx-auto">
         {/* Favorites dropdown */}
         {onRemoveFavorite && (

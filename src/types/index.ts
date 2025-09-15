@@ -10,6 +10,9 @@ export interface Message {
   hasStoredVisualization?: boolean;
   isCentered?: boolean;
   isFavorited?: boolean;
+  messageType?: 'user' | 'astra' | 'system';
+  isReply?: boolean;
+  replyToId?: string;
 }
 
 export interface VisualizationState {
@@ -32,6 +35,12 @@ export interface GroupMessage {
   metadata?: any;
   created_at: string;
   updated_at: string;
+}
+
+export interface ReplyState {
+  isReplying: boolean;
+  messageId: string | null;
+  messageSnippet: string | null;
 }
 
 export interface FavoriteMessage {
