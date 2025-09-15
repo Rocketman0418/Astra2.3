@@ -52,14 +52,8 @@ export const useGroupChat = () => {
 
   // Fetch message history
   const fetchMessages = useCallback(async (limit: number = 50) => {
-    if (!user) {
-      console.log('No user found, skipping message fetch');
-      return;
-    }
-
     try {
       setLoading(true);
-      setError(null);
       
       // Fetch from astra_chats table where mode = 'team'
       const { data, error } = await supabase
@@ -84,7 +78,7 @@ export const useGroupChat = () => {
 
       if (error) {
         console.error('Error fetching messages:', error);
-        setError(`Failed to load messages: ${error.message}`);
+        setError('Failed to load messages');
         return;
       }
 
@@ -107,15 +101,7 @@ export const useGroupChat = () => {
       setMessages(transformedMessages);
     } catch (err) {
       console.error('Error in fetchMessages:', err);
-      if (err instanceof Error) {
-        if (err.message.includes('Failed to fetch')) {
-          setError('Unable to connect to the server. Please check your internet connection and Supabase configuration.');
-        } else {
-          setError(`Failed to load messages: ${err.message}`);
-        }
-      } else {
-        setError('An unexpected error occurred while loading messages');
-      }
+      setError('Failed to load messages');
     } finally {
       setLoading(false);
     }
