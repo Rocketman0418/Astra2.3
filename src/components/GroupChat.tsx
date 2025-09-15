@@ -44,6 +44,7 @@ export const GroupChat: React.FC<GroupChatProps> = ({ showTeamMenu = false, onCl
   const [summaryResult, setSummaryResult] = useState<string | null>(null);
   const [isCreatingVisualization, setIsCreatingVisualization] = useState(false);
   const [showMembersModal, setShowMembersModal] = useState(false);
+  const [isCurrentUserAdmin, setIsCurrentUserAdmin] = useState(false);
 
   // Get user's display name
   const getUserName = useCallback(async (): Promise<string> => {
@@ -242,12 +243,13 @@ Format the summary in a clear, organized way that helps ${userName} quickly unde
         // Fetch current user data
         const { data: currentUser, error: currentUserError } = await supabase
           .from('users')
-          .select('id, name, email')
+          .select('id, name, email, is_admin')
           .eq('id', user?.id)
           .single();
 
         if (!currentUserError && currentUser) {
           setCurrentUserData(currentUser);
+          setIsCurrentUserAdmin(currentUser.is_admin || false);
         }
 
         // Fetch other users
@@ -372,6 +374,36 @@ Format the summary in a clear, organized way that helps ${userName} quickly unde
     
     console.log('❌ No visualization data found for message:', messageId);
   }, [showVisualization, getVisualization]);
+
+  // Handle message deletion (admin only)
+  const handleDeleteMessage = useCallback(async (messageId: string) => {
+    if (!isCurrentUserAdmin) {
+      console.error('Unauthorized: Only admins can delete messages');
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('astra_chats')
+        .delete()
+        .eq('id', messageId)
+        .eq('mode', 'team');
+
+      if (error) {
+        console.error('Error deleting message:', error);
+        alert('Failed to delete message. Please try again.');
+        return;
+      }
+
+      console.log('✅ Message deleted successfully:', messageId);
+      
+      // Refresh messages to reflect the deletion
+      await fetchMessages();
+    } catch (err) {
+      console.error('Error in handleDeleteMessage:', err);
+      alert('Failed to delete message. Please try again.');
+    }
+  }, [isCurrentUserAdmin, fetchMessages]);
 
   // Scroll to a specific message
   const scrollToMessage = useCallback((messageId: string) => {
@@ -718,8 +750,10 @@ Format the summary in a clear, organized way that helps ${userName} quickly unde
                       message={message}
                       currentUserId={user?.id || ''}
                       currentUserEmail={user?.email || ''}
+                      isCurrentUserAdmin={isCurrentUserAdmin}
                       onViewVisualization={handleViewVisualization}
                       onCreateVisualization={handleCreateVisualization}
+                      onDeleteMessage={handleDeleteMessage}
                       visualizationState={getVisualizationState(message.id)}
                     />
                   </div>
@@ -799,8 +833,10 @@ Format the summary in a clear, organized way that helps ${userName} quickly unde
                     message={message}
                     currentUserId={user?.id || ''}
                     currentUserEmail={user?.email || ''}
+                    isCurrentUserAdmin={isCurrentUserAdmin}
                     onViewVisualization={handleViewVisualization}
                     onCreateVisualization={handleCreateVisualization}
+                    onDeleteMessage={handleDeleteMessage}
                     visualizationState={getVisualizationState(message.id)}
                   />
                 </div>

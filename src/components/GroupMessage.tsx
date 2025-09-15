@@ -1,13 +1,15 @@
 import React from 'react';
-import { BarChart3, Check, RefreshCw } from 'lucide-react';
+import { BarChart3, Check, RefreshCw, Trash2 } from 'lucide-react';
 import { GroupMessage as GroupMessageType } from '../types';
 
 interface GroupMessageProps {
   message: GroupMessageType;
   currentUserId: string;
   currentUserEmail: string;
+  isCurrentUserAdmin?: boolean;
   onViewVisualization?: (messageId: string, visualizationData: string) => void;
   onCreateVisualization?: (messageId: string, messageContent: string) => void;
+  onDeleteMessage?: (messageId: string) => void;
   visualizationState?: any;
 }
 
@@ -124,8 +126,10 @@ export const GroupMessage: React.FC<GroupMessageProps> = ({
   message,
   currentUserId,
   currentUserEmail,
+  isCurrentUserAdmin = false,
   onViewVisualization,
   onCreateVisualization,
+  onDeleteMessage,
   visualizationState
 }) => {
   const isOwnMessage = message.user_id === currentUserId;
@@ -177,6 +181,11 @@ export const GroupMessage: React.FC<GroupMessageProps> = ({
     }
   };
 
+  const handleDeleteMessage = () => {
+    if (window.confirm('Are you sure you want to delete this message? This action cannot be undone.')) {
+      onDeleteMessage?.(message.id);
+    }
+  };
   return (
     <div className={`flex mb-4 ${isOwnMessage && !isAstraMessage ? 'justify-end' : 'justify-start'}`}>
       {/* Avatar */}
@@ -215,7 +224,18 @@ export const GroupMessage: React.FC<GroupMessageProps> = ({
             : isAstraMessage
             ? 'bg-gradient-to-br from-gray-700 to-gray-800 text-white border border-blue-500/20'
             : 'bg-gray-700 text-white'
-        }`}>
+        } relative group`}>
+          {/* Admin Delete Button */}
+          {isCurrentUserAdmin && onDeleteMessage && (
+            <button
+              onClick={handleDeleteMessage}
+              className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 p-1 hover:bg-red-500/20 rounded transition-all duration-200"
+              title="Delete message (Admin only)"
+            >
+              <Trash2 className="w-4 h-4 text-red-400 hover:text-red-300" />
+            </button>
+          )}
+
           {/* Show original prompt for Astra messages */}
           {isAstraMessage && message.astra_prompt && (
             <div className="mb-3 pb-3 border-b border-gray-600/50">
