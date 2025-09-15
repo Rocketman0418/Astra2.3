@@ -195,6 +195,39 @@ Format the summary in a clear, organized way that helps ${userName} quickly unde
       console.log('✅ Chat summary generated successfully');
       
       setSummaryResult(summaryText);
+      
+      // Post the summary as an Astra message in the main chat
+      if (!user) return;
+      
+      const userName = await getUserName();
+      
+      try {
+        // Log the summary as an Astra message in the main chat
+        await logChatMessage(
+          summaryText,
+          false, // isUser (Astra response)
+          null, // No conversation ID for team chat
+          0, // No response time for summaries
+          {}, // No tokens used
+          'gemini-2.5-flash', // Model used
+          { 
+            team_chat: true,
+            message_type: 'astra',
+            summary_type: period,
+            generated_by: userName
+          },
+          false, // visualization
+          'team', // mode
+          [], // mentions
+          `Generate a ${period.toLowerCase()} summary of team chat activity`, // astraPrompt
+          undefined // visualizationData
+        );
+        
+        // Refresh messages to show the new summary
+        await fetchMessages();
+      } catch (err) {
+        console.error('Error posting summary to chat:', err);
+      }
     } catch (error) {
       console.error('Error getting chat summary:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
