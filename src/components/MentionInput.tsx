@@ -311,48 +311,32 @@ export const MentionInput: React.FC<MentionInputProps> = ({
 
   // Handle form submission with media
   const handleSubmitWithMedia = () => {
-    if ((!value.trim() && attachedMedia.length === 0) || disabled) {
-      console.log('Cannot send: empty message and no media, or disabled');
+    if (disabled) {
       return;
     }
 
-    // Create message with both text and media
-    let messageContent = value.trim();
-    
-    // If there's media, add media info to the message
-    if (attachedMedia.length > 0) {
-      console.log('Sending message with media:', attachedMedia.length, 'files');
-      const mediaInfo = attachedMedia.map(media => ({
-        name: media.file.name,
-        size: media.file.size,
-        type: media.type,
-        preview: media.preview
-      }));
-      
-      // Create media text with preview URLs for images
-      const mediaText = attachedMedia.map(media => {
-        const emoji = media.type === 'image' ? '🖼️' : media.type === 'video' ? '🎥' : '📄';
-        // Include preview URL for images so they can be displayed
-        const nameWithPreview = media.type === 'image' ? `${media.file.name}|||${media.preview}` : media.file.name;
-        return `[${emoji} ${nameWithPreview}]`;
-      }).join(' ');
-      
-      // Combine media and text - media first, then text
-      const fullMessage = messageContent ? `${mediaText}\n\n${messageContent}` : mediaText;
-      
-      // Send combined message
-      onSend(fullMessage);
-      
-      // Clean up object URLs
-      attachedMedia.forEach(media => URL.revokeObjectURL(media.preview));
-      setAttachedMedia([]);
-    } else {
-      // Send text-only message
-      onSend(messageContent);
+    // Don't send if both text and media are empty
+    if (!value.trim() && attachedMedia.length === 0) {
+      return;
     }
 
-    // Clear input and media after sending
+    console.log('Sending message with:', { text: value.trim(), mediaCount: attachedMedia.length });
+    
+    // Always send together - both text and media info
+    const mediaInfo = attachedMedia.map(media => ({
+      name: media.file.name,
+      size: media.file.size,
+      type: media.type,
+      preview: media.preview
+    }));
+    
+    // Send the message with media info
+    onSend(value.trim(), mediaInfo);
+    
+    // Clear everything after sending
     onChange('');
+    attachedMedia.forEach(media => URL.revokeObjectURL(media.preview));
+    setAttachedMedia([]);
     setShowEmojiPicker(false);
   };
 

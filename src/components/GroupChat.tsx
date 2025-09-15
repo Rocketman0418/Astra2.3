@@ -260,14 +260,35 @@ Format the summary in a clear, organized way that helps ${userName} quickly unde
 
   // Handle sending messages
   const handleSendMessage = async (message: string, mediaInfo?: Array<{name: string, size: number, type: string, preview: string}>) => {
-    if (!message.trim()) return;
+    // Don't send if both message and media are empty
+    if (!message.trim() && (!mediaInfo || mediaInfo.length === 0)) {
+      return;
+    }
     
-    // If there's media, store it in the message metadata
+    console.log('GroupChat handleSendMessage:', { message, mediaCount: mediaInfo?.length || 0 });
+    
+    let fullMessage = message.trim();
+    
+    // Add media information to the message content
     if (mediaInfo && mediaInfo.length > 0) {
-      // For now, we'll include media info in the message content
-      // In production, you'd upload to a storage service and get URLs
-      const mediaText = mediaInfo.map(media => 
-        `[${media.type === 'image' ? '🖼️' : media.type === 'video' ? '🎥' : '📄'} ${media.name}]`
+      const mediaText = mediaInfo.map(media => {
+        const emoji = media.type === 'image' ? '🖼️' : media.type === 'video' ? '🎥' : '📄';
+        // For images, include the preview URL so we can display them
+        const nameWithPreview = media.type === 'image' ? `${media.name}|||${media.preview}` : media.name;
+        return `[${emoji} ${nameWithPreview}]`;
+      }).join(' ');
+      
+      // Combine media and text - media first, then text if it exists
+      fullMessage = message.trim() 
+        ? `${mediaText}\n\n${message.trim()}`
+        : mediaText;
+    }
+    
+    console.log('Sending full message:', fullMessage);
+    await sendMessage(fullMessage);
+    
+    setInputValue('');
+  };
       ).join(' ');
       
       const fullMessage = message ? `${message}\n\n${mediaText}` : mediaText;
