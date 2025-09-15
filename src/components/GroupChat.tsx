@@ -191,12 +191,25 @@ export const GroupChat: React.FC<GroupChatProps> = ({ showTeamMenu = false, onCl
         }
       });
 
-      const summaryPrompt = `Please provide a brief summary of the team chat activity from the last ${period.toLowerCase()}.
+      // Create personalized summary prompt
+      const summaryPrompt = `Please provide a comprehensive summary of the team chat activity from the last ${period.toLowerCase()} for ${userName}. 
+
+Here are the team chat messages in chronological order:
+
+${formattedMessages}
+
+- Overall team activity and engagement patterns
+
+Format the summary in a clear, organized way that helps ${userName} quickly understand what they may have missed and what's important for them to know.`;
 
      console.log('🤖 Sending request to Gemini...');
      console.log('🤖 Prompt length:', summaryPrompt.length);
      
       console.log('🤖 Generating chat summary with Gemini...');
+      
+      const result = await model.generateContent(summaryPrompt);
+      const response = await result.response;
+      
       console.log('🤖 Raw Gemini result:', result);
       console.log('🤖 Raw Gemini response:', response);
       
@@ -335,7 +348,7 @@ ${finalSummary}
     } finally {
       setIsSummarizing(false);
     }
-  }, [user, getUserName]);
+  }, [user, getUserName, logChatMessage, onSwitchToPrivateChat]);
 
   // Fetch users for mentions
   useEffect(() => {
