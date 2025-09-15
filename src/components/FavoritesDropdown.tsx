@@ -87,7 +87,7 @@ export const FavoritesDropdown: React.FC<FavoritesDropdownProps> = ({
               >
                 <div className="flex items-start justify-between">
                   <div className="flex-1 min-w-0 mr-2">
-                    <p className="text-white text-sm line-clamp-2 mb-1">
+                    <p className="text-white text-sm line-clamp-5 mb-1">
                       {favorite.text}
                     </p>
                     <p className="text-gray-500 text-xs">
