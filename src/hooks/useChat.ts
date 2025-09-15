@@ -89,8 +89,7 @@ export const useChat = () => {
       setMessages([
         ...uiMessages
       ]);
-      setHasLoadedConversation(true);
-    } else if (currentConversationId && !hasLoadedConversation) {
+    } else if (currentConversationId && currentMessages.length === 0 && !chatsLoading) {
       // Reset to welcome message for new conversations
       console.log('useChat: Resetting to welcome message');
       setMessages([
@@ -103,19 +102,30 @@ export const useChat = () => {
         }
       ]);
     }
-  }, [currentMessages, currentConversationId, hasLoadedConversation]);
+  }, [currentMessages, currentConversationId, chatsLoading]);
 
-  // Load the most recent conversation when component mounts
+  // Load the most recent conversation when component mounts or when returning to private chat
   useEffect(() => {
-    if (user && hasInitialized && !hasLoadedConversation && !currentConversationId) {
+    if (user && hasInitialized && !currentConversationId) {
       // If there are existing conversations, load the most recent one
       if (conversations.length > 0) {
         console.log('useChat: Loading most recent conversation:', conversations[0].id);
         loadConversation(conversations[0].id);
+      } else {
+        // No existing conversations, start fresh
+        console.log('useChat: No existing conversations, starting fresh');
+        setMessages([
+          {
+            id: 'welcome',
+            text: "Welcome, I'm Astra. What can I help you with today?",
+            isUser: false,
+            timestamp: new Date(),
+            isCentered: true
+          }
+        ]);
       }
-      setHasLoadedConversation(true);
     }
-  }, [user, hasInitialized, conversations, hasLoadedConversation, currentConversationId, loadConversation]);
+  }, [user, hasInitialized, conversations, currentConversationId, loadConversation]);
 
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
