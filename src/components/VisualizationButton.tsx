@@ -16,20 +16,26 @@ export const VisualizationButton: React.FC<VisualizationButtonProps> = ({
   onViewVisualization,
   visualizationState
 }) => {
+  console.log('🔍 VisualizationButton: Rendering for messageId:', messageId, 'visualizationState:', visualizationState);
+  
   const handleClick = () => {
+    console.log('🔍 VisualizationButton: Button clicked for messageId:', messageId, 'visualizationState:', visualizationState);
     if (visualizationState?.content) {
+      console.log('🔍 VisualizationButton: Viewing existing visualization');
       onViewVisualization(messageId);
     } else {
+      console.log('🔍 VisualizationButton: Creating new visualization');
       onCreateVisualization(messageId, messageText);
     }
   };
 
   const handleTryAgain = () => {
+    console.log('🔍 VisualizationButton: Retry clicked for messageId:', messageId);
     onCreateVisualization(messageId, messageText);
   };
 
   const isGenerating = visualizationState?.isGenerating;
-  const hasVisualization = visualizationState?.content;
+  const hasVisualization = visualizationState?.content || visualizationState?.hasVisualization;
   
   const buttonText = isGenerating
     ? 'Generating...'
@@ -37,6 +43,7 @@ export const VisualizationButton: React.FC<VisualizationButtonProps> = ({
     ? 'View Visualization'
     : 'Create Visualization';
 
+  console.log('🔍 VisualizationButton: Button state - isGenerating:', isGenerating, 'hasVisualization:', hasVisualization, 'buttonText:', buttonText);
   return (
     <div className="flex items-center space-x-2">
       <button

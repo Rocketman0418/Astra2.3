@@ -83,8 +83,13 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({
     
     setIsCreatingVisualization(true);
     
-    // messageId is already the chatId from MessageBubble
-    const actualChatId = messageId;
+    // Set generating state immediately with proper structure
+    updateVisualizationState(messageId, { 
+      messageId,
+      isGenerating: true, 
+      content: null,
+      isVisible: false
+    });
     console.log('🎯 Private chat: Using chatId:', actualChatId);
     
     // Set generating state immediately
@@ -97,20 +102,24 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({
       
       // Set completion state
       setTimeout(() => {
-        updateVisualizationState(actualChatId, { 
+        updateVisualizationState(messageId, {
+          messageId,
           isGenerating: false, 
           content: 'generated', 
-          hasVisualization: true 
+          hasVisualization: true,
+          isVisible: false
         });
         console.log('✅ Private chat: Updated visualization state for message:', actualChatId);
       }, 100);
       
     } catch (error) {
       console.error('❌ Private chat: Error during visualization generation:', error);
-      updateVisualizationState(actualChatId, { 
+      updateVisualizationState(messageId, {
+        messageId,
         isGenerating: false, 
         content: null, 
-        hasVisualization: false 
+        hasVisualization: false,
+        isVisible: false
       });
     }
     finally {
@@ -165,9 +174,11 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({
       return;
     }
     
+        messageId: actualChatId,
     // Check hook state for visualization content
     const hookVisualization = getHookVisualization(actualChatId);
-    if (hookVisualization?.content) {
+        hasVisualization: true,
+        isVisible: false
       console.log('📊 Private chat: Using hook visualization data');
       showVisualization(actualChatId);
       return;

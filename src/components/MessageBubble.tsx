@@ -190,6 +190,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
         
         {!message.isUser && message.chatId && onCreateVisualization && onViewVisualization && (
           <div className="mt-2 md:mt-3">
+            {console.log('🔍 MessageBubble: Rendering visualization button for chatId:', message.chatId, 'visualizationState:', visualizationState)}
             <VisualizationButton
               messageId={message.chatId}
               messageText={message.text}
