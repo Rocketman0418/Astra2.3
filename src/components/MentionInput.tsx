@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect, KeyboardEvent } from 'react';
 import { Send, Smile, X, Image, Video, FileText, Camera } from 'lucide-react';
+import { uploadFile } from '../lib/storage';
 
 interface User {
   id: string;
@@ -38,6 +39,7 @@ export const MentionInput: React.FC<MentionInputProps> = ({
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [attachedMedia, setAttachedMedia] = useState<MediaFile[]>([]);
   const [showMediaMenu, setShowMediaMenu] = useState(false);
+  const [uploadingFiles, setUploadingFiles] = useState<Set<string>>(new Set());
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const mentionsRef = useRef<HTMLDivElement>(null);
   const emojiPickerRef = useRef<HTMLDivElement>(null);
@@ -315,38 +317,67 @@ export const MentionInput: React.FC<MentionInputProps> = ({
       return;
     }
 
-    // Don't send if both text and media are empty
-    if (!value.trim() && attachedMedia.length === 0) {
+    // Don't send if both text and media are empty, or if files are still uploading
+    if ((!value.trim() && attachedMedia.length === 0) || uploadingFiles.size > 0) {
       return;
     }
 
-    console.log('Sending message with:', { 
-      text: value.trim(), 
-      mediaCount: attachedMedia.length,
-      mediaDetails: attachedMedia.map(m => ({ name: m.file.name, preview: m.preview }))
-    });
+    // Upload files to Supabase Storage first
+    const uploadAndSend = async () => {
+      try {
+        console.log('📤 Starting file uploads for:', attachedMedia.length, 'files');
+        
+        const mediaInfo = await Promise.all(
+          attachedMedia.map(async (media) => {
+            const fileId = `${media.file.name}-${Date.now()}`;
+            setUploadingFiles(prev => new Set([...prev, fileId]));
+            
+            try {
+              console.log('⬆️ Uploading file:', media.file.name);
+              const uploadResult = await uploadFile(media.file);
+              
+              if (uploadResult.error) {
+                console.error('❌ Upload failed for:', media.file.name, uploadResult.error);
+                throw new Error(uploadResult.error);
+              }
+              
+              console.log('✅ Upload successful for:', media.file.name, uploadResult.url);
+              
+              return {
+                name: media.file.name,
+                size: media.file.size,
+                type: media.type,
+                preview: uploadResult.url, // Use permanent Supabase URL
+                supabasePath: uploadResult.path
+              };
+            } finally {
+              setUploadingFiles(prev => {
+                const newSet = new Set(prev);
+                newSet.delete(fileId);
+                return newSet;
+              });
+            }
+          })
+        );
+        
+        console.log('✅ All files uploaded successfully, sending message');
+        
+        // Send the message with permanent URLs
+        onSend(value.trim(), mediaInfo);
+        
+        // Clear form
+        onChange('');
+        attachedMedia.forEach(media => URL.revokeObjectURL(media.preview));
+        setAttachedMedia([]);
+        setShowEmojiPicker(false);
+        
+      } catch (error) {
+        console.error('❌ Error uploading files:', error);
+        alert('Failed to upload files. Please try again.');
+      }
+    };
     
-    // Always send together - both text and media info
-    const mediaInfo = attachedMedia.map(media => ({
-      name: media.file.name,
-      size: media.file.size,
-      type: media.type,
-      preview: media.preview
-    }));
-    
-    // Send the message with media info
-    onSend(value.trim(), mediaInfo);
-    
-    // Clear text but keep media URLs alive briefly for the message to use them
-    onChange('');
-    
-    // Clear media after a short delay to allow the message to render
-    setTimeout(() => {
-      attachedMedia.forEach(media => URL.revokeObjectURL(media.preview));
-      setAttachedMedia([]);
-    }, 1000);
-    
-    setShowEmojiPicker(false);
+    uploadAndSend();
   };
 
   // Clean up object URLs on unmount
@@ -475,6 +506,14 @@ export const MentionInput: React.FC<MentionInputProps> = ({
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {attachedMedia.map((media, index) => (
               <div key={index} className="relative group">
+                {uploadingFiles.size > 0 && (
+                  <div className="absolute inset-0 bg-black/50 rounded-lg flex items-center justify-center z-10">
+                    <div className="text-center">
+                      <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin mx-auto mb-2" />
+                      <div className="text-xs text-white">Uploading...</div>
+                    </div>
+                  </div>
+                )}
                 <div className="bg-gray-700 rounded-lg p-3 border border-gray-600">
                   {media.type === 'image' ? (
                     <div className="flex items-center space-x-3">
@@ -575,10 +614,18 @@ export const MentionInput: React.FC<MentionInputProps> = ({
           
           <button
             onClick={handleSubmitWithMedia}
-            disabled={disabled || (!value.trim() && attachedMedia.length === 0)}
-            className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 disabled:from-gray-600 disabled:to-gray-700 text-white rounded-full p-3 transition-all duration-200 transform hover:scale-105 disabled:scale-100 disabled:cursor-not-allowed min-h-[48px] min-w-[48px] flex items-center justify-center touch-manipulation"
+            disabled={disabled || (!value.trim() && attachedMedia.length === 0) || uploadingFiles.size > 0}
+            className={`text-white rounded-full p-3 transition-all duration-200 transform hover:scale-105 disabled:scale-100 disabled:cursor-not-allowed min-h-[48px] min-w-[48px] flex items-center justify-center touch-manipulation ${
+              uploadingFiles.size > 0
+                ? 'bg-gradient-to-r from-orange-500 to-orange-600 animate-pulse'
+                : 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 disabled:from-gray-600 disabled:to-gray-700'
+            }`}
           >
-            <Send className="w-5 h-5" />
+            {uploadingFiles.size > 0 ? (
+              <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+            ) : (
+              <Send className="w-5 h-5" />
+            )}
           </button>
         </div>
       </div>

@@ -282,7 +282,7 @@ export const GroupMessage: React.FC<GroupMessageProps> = ({
                     ) : (
                       <div className="flex items-center space-x-3 p-3">
                         <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${
-                          media.type === 'video' ? 'bg-purple-500/20' : 'bg-green-500/20'
+                          media.type === 'image' ? 'bg-blue-500/20' : media.type === 'video' ? 'bg-purple-500/20' : 'bg-green-500/20'
                         }`}>
                           <span className="text-2xl">{media.emoji}</span>
                         </div>
@@ -290,13 +290,11 @@ export const GroupMessage: React.FC<GroupMessageProps> = ({
                           <div className="text-sm font-medium text-gray-200 truncate">
                             {media.name}
                           </div>
-                          <div className="text-xs text-gray-400 capitalize">
-                            {media.type} file
+                          <div className="text-xs text-gray-400">
+                            {media.type === 'image' ? 'Image file' : media.type === 'video' ? 'Video file' : 'PDF file'}
+                            {media.type === 'image' && ' • Preview expired'}
                           </div>
                         </div>
-                        <button className="text-xs text-blue-300 hover:text-blue-200 underline px-2 py-1 rounded">
-                          View
-                        </button>
                       </div>
                     )}
                   </div>
