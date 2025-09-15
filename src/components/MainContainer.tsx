@@ -11,8 +11,7 @@ export const MainContainer: React.FC = () => {
   const [chatMode, setChatMode] = useState<ChatMode>('team');
   const [conversationToLoad, setConversationToLoad] = useState<string | null>(null);
   const [shouldStartNewChat, setShouldStartNewChat] = useState(false);
-  const [showSearch, setShowSearch] = useState(false);
-  const [showMembers, setShowMembers] = useState(false);
+  const [showTeamMenu, setShowTeamMenu] = useState(false);
 
   // Close sidebar when switching to private chat mode
   React.useEffect(() => {
@@ -31,14 +30,8 @@ export const MainContainer: React.FC = () => {
     setSidebarOpen(false);
   };
 
-  const handleToggleSearch = () => {
-    setShowSearch(!showSearch);
-    setShowMembers(false); // Close members if open
-  };
-
-  const handleToggleMembers = () => {
-    setShowMembers(!showMembers);
-    setShowSearch(false); // Close search if open
+  const handleToggleTeamMenu = () => {
+    setShowTeamMenu(!showTeamMenu);
   };
 
   return (
@@ -58,8 +51,7 @@ export const MainContainer: React.FC = () => {
           onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
           showSidebarToggle={chatMode === 'private'}
           chatMode={chatMode}
-          onToggleSearch={handleToggleSearch}
-          onToggleMembers={handleToggleMembers}
+          onToggleTeamMenu={handleToggleTeamMenu}
         />
         
         {/* Chat Mode Toggle */}
@@ -80,10 +72,8 @@ export const MainContainer: React.FC = () => {
             />
           ) : (
             <GroupChat 
-              showSearch={showSearch}
-              showMembers={showMembers}
-              onCloseSearch={() => setShowSearch(false)}
-              onCloseMembers={() => setShowMembers(false)}
+              showTeamMenu={showTeamMenu}
+              onCloseTeamMenu={() => setShowTeamMenu(false)}
             />
           )}
         </div>

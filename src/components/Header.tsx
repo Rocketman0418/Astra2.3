@@ -7,16 +7,14 @@ interface HeaderProps {
   onToggleSidebar: () => void;
   showSidebarToggle?: boolean;
   chatMode?: ChatMode;
-  onToggleSearch?: () => void;
-  onToggleMembers?: () => void;
+  onToggleTeamMenu?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({ 
   onToggleSidebar, 
   showSidebarToggle = true,
   chatMode = 'private',
-  onToggleSearch,
-  onToggleMembers
+  onToggleTeamMenu
 }) => {
   const { user } = useAuth();
 
@@ -34,22 +32,14 @@ export const Header: React.FC<HeaderProps> = ({
             </button>
           )}
           
-          {/* Team chat controls */}
+          {/* Team chat menu */}
           {chatMode === 'team' && (
-            <div className="flex items-center space-x-2">
-              <button
-                onClick={onToggleMembers}
-                className="p-2 hover:bg-blue-700 rounded-lg transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center touch-manipulation my-2"
-              >
-                <Users className="w-6 h-6 text-white" />
-              </button>
-              <button
-                onClick={onToggleSearch}
-                className="p-2 hover:bg-blue-700 rounded-lg transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center touch-manipulation my-2"
-              >
-                <Search className="w-6 h-6 text-white" />
-              </button>
-            </div>
+            <button
+              onClick={onToggleTeamMenu}
+              className="p-2 hover:bg-blue-700 rounded-lg transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center touch-manipulation my-2"
+            >
+              <Menu className="w-6 h-6 text-white" />
+            </button>
           )}
           
           {/* Private chat mode indicator */}

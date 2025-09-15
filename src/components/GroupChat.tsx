@@ -23,13 +23,11 @@ interface UserWithCurrentFlag extends User {
 }
 
 interface GroupChatProps {
-  showSearch?: boolean;
-  showMembers?: boolean;
-  onCloseSearch?: () => void;
-  onCloseMembers?: () => void;
+  showTeamMenu?: boolean;
+  onCloseTeamMenu?: () => void;
 }
 
-export const GroupChat: React.FC<GroupChatProps> = ({ showSearch = false, showMembers = false, onCloseSearch, onCloseMembers }) => {
+export const GroupChat: React.FC<GroupChatProps> = ({ showTeamMenu = false, onCloseTeamMenu }) => {
   const { user } = useAuth();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [inputValue, setInputValue] = useState('');
@@ -43,6 +41,7 @@ export const GroupChat: React.FC<GroupChatProps> = ({ showSearch = false, showMe
   const [isSummarizing, setIsSummarizing] = useState(false);
   const [summaryResult, setSummaryResult] = useState<string | null>(null);
   const [isCreatingVisualization, setIsCreatingVisualization] = useState(false);
+  const [showMembersModal, setShowMembersModal] = useState(false);
 
   // Get user's display name
   const getUserName = useCallback(async (): Promise<string> => {
@@ -430,22 +429,33 @@ Format the summary in a clear, organized way that helps ${userName} quickly unde
   }
 
   // Show search sidebar
-  if (showSearch) {
+  if (showTeamMenu) {
     return (
       <div className="flex h-full">
-        {/* Search Sidebar */}
+        {/* Team Menu Sidebar */}
         <div className="w-80 bg-gray-800 border-r border-gray-700 flex flex-col">
           <div className="p-4 border-b border-gray-700">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center space-x-2">
-                <Search className="w-5 h-5 text-blue-400" />
-                <h2 className="text-lg font-bold text-white">Search Messages</h2>
+                <Menu className="w-5 h-5 text-blue-400" />
+                <h2 className="text-lg font-bold text-white">Team Chat Tools</h2>
               </div>
               <button
-                onClick={onCloseSearch}
+                onClick={onCloseTeamMenu}
                 className="p-2 hover:bg-gray-700 rounded-lg transition-colors"
               >
                 <X className="w-5 h-5 text-gray-400" />
+              </button>
+            </div>
+
+            {/* Team Members Button */}
+            <div className="mb-4">
+              <button
+                onClick={() => setShowMembersModal(true)}
+                className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-medium py-2 px-4 rounded-lg transition-all duration-200 flex items-center justify-center space-x-2"
+              >
+                <Users className="w-4 h-4" />
+                <span>Team Members</span>
               </button>
             </div>
 
@@ -494,6 +504,13 @@ Format the summary in a clear, organized way that helps ${userName} quickly unde
                   </div>
                 )}
               </div>
+            </div>
+
+            {/* Search Messages */}
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                Search Messages
+              </label>
             </div>
 
             <div className="relative">
@@ -662,64 +679,69 @@ Format the summary in a clear, organized way that helps ${userName} quickly unde
     );
   }
 
-  return (
-    <div className="flex flex-col h-full">
-      {/* Members Modal */}
-      {showMembers && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-gray-800 rounded-lg shadow-xl max-w-md w-full max-h-96 overflow-hidden">
-            <div className="flex items-center justify-between p-4 border-b border-gray-700">
-              <h3 className="text-lg font-bold text-white">Team Members</h3>
-              <button
-                onClick={onCloseMembers}
-                className="p-2 hover:bg-gray-700 rounded-lg transition-colors"
-              >
-                <X className="w-5 h-5 text-gray-400" />
-              </button>
+  {/* Team Members Modal */}
+  const membersModal = showMembersModal && (
+    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+      <div className="bg-gray-800 rounded-lg shadow-xl max-w-md w-full max-h-96 overflow-hidden">
+        <div className="flex items-center justify-between p-4 border-b border-gray-700">
+          <h3 className="text-lg font-bold text-white">Team Members</h3>
+          <button
+            onClick={() => setShowMembersModal(false)}
+            className="p-2 hover:bg-gray-700 rounded-lg transition-colors"
+          >
+            <X className="w-5 h-5 text-gray-400" />
+          </button>
+        </div>
+        <div className="p-4 space-y-3 max-h-80 overflow-y-auto">
+          {/* Astra */}
+          <div className="flex items-center space-x-3">
+            <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-purple-600 rounded-full flex items-center justify-center">
+              🚀
             </div>
-            <div className="p-4 space-y-3 max-h-80 overflow-y-auto">
-              {/* Astra */}
-              <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-purple-600 rounded-full flex items-center justify-center">
-                  🚀
-                </div>
-                <div>
-                  <div className="text-white font-medium">Astra</div>
-                  <div className="text-gray-400 text-sm">AI Intelligence</div>
-                </div>
-              </div>
-              
-              {/* Current User */}
-              {currentUserData && (
-                <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 bg-gray-600 rounded-full flex items-center justify-center text-white font-bold">
-                    {currentUserData.name?.charAt(0) || currentUserData.email.charAt(0)}
-                  </div>
-                  <div>
-                    <div className="text-white font-medium">
-                      {currentUserData.name || currentUserData.email.split('@')[0]}
-                    </div>
-                    <div className="text-gray-400 text-sm">{currentUserData.email}</div>
-                  </div>
-                </div>
-              )}
-              
-              {/* Other Users */}
-              {users.map((member) => (
-                <div key={member.id} className="flex items-center space-x-3">
-                  <div className="w-10 h-10 bg-gray-600 rounded-full flex items-center justify-center text-white font-bold">
-                    {member.name?.charAt(0) || member.email.charAt(0)}
-                  </div>
-                  <div>
-                    <div className="text-white font-medium">{member.name || member.email.split('@')[0]}</div>
-                    <div className="text-gray-400 text-sm">{member.email}</div>
-                  </div>
-                </div>
-              ))}
+            <div>
+              <div className="text-white font-medium">Astra</div>
+              <div className="text-gray-400 text-sm">AI Intelligence</div>
             </div>
           </div>
+          
+          {/* Current User */}
+          {currentUserData && (
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 bg-gray-600 rounded-full flex items-center justify-center text-white font-bold">
+                {currentUserData.name?.charAt(0) || currentUserData.email.charAt(0)}
+              </div>
+              <div>
+                <div className="text-white font-medium">
+                  {currentUserData.name || currentUserData.email.split('@')[0]}
+                </div>
+                <div className="text-gray-400 text-sm">{currentUserData.email}</div>
+              </div>
+            </div>
+          )}
+          
+          {/* Other Users */}
+          {users.map((member) => (
+            <div key={member.id} className="flex items-center space-x-3">
+              <div className="w-10 h-10 bg-gray-600 rounded-full flex items-center justify-center text-white font-bold">
+                {member.name?.charAt(0) || member.email.charAt(0)}
+              </div>
+              <div>
+                <div className="text-white font-medium">{member.name || member.email.split('@')[0]}</div>
+                <div className="text-gray-400 text-sm">{member.email}</div>
+              </div>
+            </div>
+          ))}
         </div>
-      )}
+      </div>
+    </div>
+  );
+
+  return (
+    <>
+      {/* Team Members Modal */}
+      {membersModal}
+      
+      <div className="flex flex-col h-full">
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto p-4 space-y-1 chat-messages-container">
