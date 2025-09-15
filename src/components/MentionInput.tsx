@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, KeyboardEvent } from 'react';
-import { Send, Smile, Paperclip, X, Image, Video } from 'lucide-react';
+import { Send, Smile, X, Image, Video, FileText, Camera } from 'lucide-react';
 
 interface User {
   id: string;
@@ -20,7 +20,7 @@ interface MentionInputProps {
 interface MediaFile {
   file: File;
   preview: string;
-  type: 'image' | 'video';
+  type: 'image' | 'video' | 'pdf';
 }
 export const MentionInput: React.FC<MentionInputProps> = ({
   value,
@@ -212,8 +212,10 @@ export const MentionInput: React.FC<MentionInputProps> = ({
   // Media upload constants
   const MAX_IMAGE_SIZE = 10 * 1024 * 1024; // 10MB
   const MAX_VIDEO_SIZE = 50 * 1024 * 1024; // 50MB
-  const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+  const MAX_PDF_SIZE = 25 * 1024 * 1024; // 25MB
+  const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'image/bmp', 'image/tiff'];
   const ALLOWED_VIDEO_TYPES = ['video/mp4', 'video/webm', 'video/mov', 'video/avi'];
+  const ALLOWED_PDF_TYPES = ['application/pdf'];
 
   // Handle file selection
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -223,16 +225,18 @@ export const MentionInput: React.FC<MentionInputProps> = ({
     Array.from(files).forEach(file => {
       const isImage = ALLOWED_IMAGE_TYPES.includes(file.type);
       const isVideo = ALLOWED_VIDEO_TYPES.includes(file.type);
+      const isPDF = ALLOWED_PDF_TYPES.includes(file.type);
 
-      if (!isImage && !isVideo) {
-        alert('Please select a valid image (JPEG, PNG, GIF, WebP) or video (MP4, WebM, MOV, AVI) file.');
+      if (!isImage && !isVideo && !isPDF) {
+        alert('Please select a valid image, video, or PDF file. See supported formats in the upload menu.');
         return;
       }
 
-      const maxSize = isImage ? MAX_IMAGE_SIZE : MAX_VIDEO_SIZE;
+      const maxSize = isImage ? MAX_IMAGE_SIZE : isVideo ? MAX_VIDEO_SIZE : MAX_PDF_SIZE;
       if (file.size > maxSize) {
         const maxSizeMB = maxSize / (1024 * 1024);
-        alert(`File size must be less than ${maxSizeMB}MB for ${isImage ? 'images' : 'videos'}.`);
+        const fileType = isImage ? 'images' : isVideo ? 'videos' : 'PDFs';
+        alert(`File size must be less than ${maxSizeMB}MB for ${fileType}.`);
         return;
       }
 
@@ -241,7 +245,7 @@ export const MentionInput: React.FC<MentionInputProps> = ({
       const mediaFile: MediaFile = {
         file,
         preview,
-        type: isImage ? 'image' : 'video'
+        type: isImage ? 'image' : isVideo ? 'video' : 'pdf'
       };
 
       setAttachedMedia(prev => [...prev, mediaFile]);
@@ -340,7 +344,7 @@ export const MentionInput: React.FC<MentionInputProps> = ({
       <input
         ref={fileInputRef}
         type="file"
-        accept={[...ALLOWED_IMAGE_TYPES, ...ALLOWED_VIDEO_TYPES].join(',')}
+        accept={[...ALLOWED_IMAGE_TYPES, ...ALLOWED_VIDEO_TYPES, ...ALLOWED_PDF_TYPES].join(',')}
         multiple
         onChange={handleFileSelect}
         className="hidden"
@@ -380,23 +384,44 @@ export const MentionInput: React.FC<MentionInputProps> = ({
       {showMediaMenu && (
         <div
           ref={mediaMenuRef}
-          className="absolute bottom-full left-0 mb-2 bg-gray-800 border border-gray-600 rounded-lg shadow-lg p-2 z-50"
+          className="absolute bottom-full left-0 mb-2 bg-gray-800 border border-gray-600 rounded-lg shadow-lg p-2 z-50 min-w-64"
         >
+          <div className="px-3 py-2 border-b border-gray-600 mb-2">
+            <h4 className="text-white text-sm font-medium mb-1">Upload Media</h4>
+            <p className="text-gray-400 text-xs">Supported file types:</p>
+          </div>
+          
           <button
             onClick={handleMediaUpload}
-            className="flex items-center space-x-2 w-full text-left px-3 py-2 hover:bg-gray-700 rounded-lg transition-colors text-white text-sm"
+            className="flex items-center space-x-3 w-full text-left px-3 py-2 hover:bg-gray-700 rounded-lg transition-colors text-white text-sm mb-1"
           >
-            <Image className="w-4 h-4 text-blue-400" />
-            <span>Upload Image</span>
-            <span className="text-xs text-gray-400">(Max 10MB)</span>
+            <Camera className="w-4 h-4 text-blue-400" />
+            <div className="flex-1">
+              <div className="font-medium">Photos & Screenshots</div>
+              <div className="text-xs text-gray-400">JPEG, PNG, GIF, WebP, BMP, TIFF (Max 10MB)</div>
+            </div>
           </button>
+          
           <button
             onClick={handleMediaUpload}
-            className="flex items-center space-x-2 w-full text-left px-3 py-2 hover:bg-gray-700 rounded-lg transition-colors text-white text-sm"
+            className="flex items-center space-x-3 w-full text-left px-3 py-2 hover:bg-gray-700 rounded-lg transition-colors text-white text-sm mb-1"
           >
             <Video className="w-4 h-4 text-purple-400" />
-            <span>Upload Video</span>
-            <span className="text-xs text-gray-400">(Max 50MB)</span>
+            <div className="flex-1">
+              <div className="font-medium">Videos</div>
+              <div className="text-xs text-gray-400">MP4, WebM, MOV, AVI (Max 50MB)</div>
+            </div>
+          </button>
+          
+          <button
+            onClick={handleMediaUpload}
+            className="flex items-center space-x-3 w-full text-left px-3 py-2 hover:bg-gray-700 rounded-lg transition-colors text-white text-sm"
+          >
+            <FileText className="w-4 h-4 text-green-400" />
+            <div className="flex-1">
+              <div className="font-medium">PDF Documents</div>
+              <div className="text-xs text-gray-400">PDF files (Max 25MB)</div>
+            </div>
           </button>
         </div>
       )}
@@ -438,12 +463,16 @@ export const MentionInput: React.FC<MentionInputProps> = ({
                     alt="Preview"
                     className="w-full h-20 object-cover rounded-lg"
                   />
-                ) : (
+                ) : media.type === 'video' ? (
                   <video
                     src={media.preview}
                     className="w-full h-20 object-cover rounded-lg"
                     muted
                   />
+                ) : (
+                  <div className="w-full h-20 bg-gray-700 rounded-lg flex items-center justify-center">
+                    <FileText className="w-8 h-8 text-green-400" />
+                  </div>
                 )}
                 <button
                   onClick={() => removeMedia(index)}
@@ -452,7 +481,7 @@ export const MentionInput: React.FC<MentionInputProps> = ({
                   <X className="w-3 h-3 text-white" />
                 </button>
                 <div className="absolute bottom-1 left-1 bg-black/50 text-white text-xs px-1 rounded">
-                  {media.type === 'image' ? '📷' : '🎥'}
+                  {media.type === 'image' ? '📷' : media.type === 'video' ? '🎥' : '📄'}
                 </div>
               </div>
             ))}
@@ -484,8 +513,9 @@ export const MentionInput: React.FC<MentionInputProps> = ({
             type="button"
             onClick={() => setShowMediaMenu(!showMediaMenu)}
             className="p-3 hover:bg-gray-700 rounded-full transition-colors min-h-[48px] min-w-[48px] flex items-center justify-center touch-manipulation"
+            title="Upload media files"
           >
-            <Paperclip className="w-5 h-5 text-gray-400" />
+            <Image className="w-5 h-5 text-gray-400" />
           </button>
           
           {!hasAstraMention && (
