@@ -197,10 +197,6 @@ Format the summary in a clear, organized way that helps ${userName} quickly unde
       setSummaryResult(summaryText);
       
       // Post the summary as an Astra message in the main chat
-      if (!user) return;
-      
-      const userName = await getUserName();
-      
       try {
         // Log the summary as an Astra message in the main chat
         await logChatMessage(
