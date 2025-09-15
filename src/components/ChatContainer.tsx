@@ -90,6 +90,7 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({
       content: null,
       isVisible: false
     });
+    const actualChatId = messageId;
     console.log('🎯 Private chat: Using chatId:', actualChatId);
     
     // Set generating state immediately
@@ -159,9 +160,11 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({
             console.log('📊 Private chat: Using database visualization data');
             // Store in hook state and show
             updateVisualizationState(actualChatId, {
+              messageId: actualChatId,
               isGenerating: false,
               content: data.visualization_data,
-              hasVisualization: true
+              hasVisualization: true,
+              isVisible: false
             });
             showVisualization(actualChatId);
           }
@@ -174,11 +177,9 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({
       return;
     }
     
-        messageId: actualChatId,
     // Check hook state for visualization content
     const hookVisualization = getHookVisualization(actualChatId);
-        hasVisualization: true,
-        isVisible: false
+    if (hookVisualization?.content) {
       console.log('📊 Private chat: Using hook visualization data');
       showVisualization(actualChatId);
       return;
