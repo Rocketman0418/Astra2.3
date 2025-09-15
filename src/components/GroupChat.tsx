@@ -51,6 +51,8 @@ export const GroupChat: React.FC<GroupChatProps> = ({ showSearch = false, showMe
     searchMessages,
   } = useGroupChat();
 
+  // Import Gemini for chat summaries
+  const { GoogleGenerativeAI } = require('@google/generative-ai');
   const {
     generateVisualization,
     showVisualization,
@@ -82,59 +84,105 @@ export const GroupChat: React.FC<GroupChatProps> = ({ showSearch = false, showMe
     setShowSummaryOptions(false);
     setSummaryResult(null);
     
-    const promptMap = {
-      '24 Hours': 'Summarize team chat from last 24 hours',
-      '7 Days': 'Summarize team chat from last 7 days', 
-      '30 Days': 'Summarize team chat from last 30 days'
-    };
-    
-    const prompt = promptMap[period];
-    
     try {
       const userName = await getUserName();
       
-      const response = await fetch('https://healthrocket.app.n8n.cloud/webhook/8ec404be-7f51-47c8-8faf-0d139bd4c5e9/chat', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          chatInput: prompt,
-          user_id: user.id,
-          user_email: user.email || '',
-          user_name: userName,
-          conversation_id: null,
-          mode: 'team',
-          original_message: prompt,
-          mentions: []
-        })
-      });
+      // Calculate date range
+      const now = new Date();
+      const periodHours = {
+        '24 Hours': 24,
+        '7 Days': 24 * 7,
+        '30 Days': 24 * 30
+      };
+      const startDate = new Date(now.getTime() - (periodHours[period] * 60 * 60 * 1000));
       
-      if (!response.ok) {
-        throw new Error('Failed to get summary');
+      // Fetch team chat messages from the specified time period
+      const { data: chatMessages, error } = await supabase
+        .from('astra_chats')
+        .select(`
+          id,
+          user_name,
+          message,
+          message_type,
+          created_at,
+          mentions,
+          astra_prompt
+        `)
+        .eq('mode', 'team')
+        .gte('created_at', startDate.toISOString())
+        .order('created_at', { ascending: true });
+
+      if (error) {
+        throw new Error('Failed to fetch chat messages');
       }
       
-      const responseText = await response.text();
-      let summaryText = responseText;
-      
-      // Try to parse JSON response
-      try {
-        const jsonResponse = JSON.parse(responseText);
-        if (jsonResponse.output) {
-          summaryText = jsonResponse.output;
+      if (!chatMessages || chatMessages.length === 0) {
+        setSummaryResult(`No team chat messages found in the last ${period.toLowerCase()}.`);
+        return;
+      }
+
+      // Format messages for Gemini
+      const formattedMessages = chatMessages.map(msg => {
+        const timestamp = new Date(msg.created_at).toLocaleString();
+        if (msg.message_type === 'astra') {
+          const originalPrompt = msg.astra_prompt ? ` (responding to: "${msg.astra_prompt}")` : '';
+          return `[${timestamp}] Astra${originalPrompt}: ${msg.message}`;
+        } else {
+          const mentions = msg.mentions && msg.mentions.length > 0 ? ` (mentioned: ${msg.mentions.join(', ')})` : '';
+          return `[${timestamp}] ${msg.user_name}${mentions}: ${msg.message}`;
         }
-      } catch (e) {
-        // Use raw text if not JSON
+      }).join('\n\n');
+
+      // Get API key and initialize Gemini
+      const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+      if (!apiKey) {
+        throw new Error('Gemini API key not found');
       }
+
+      const genAI = new GoogleGenerativeAI(apiKey);
+      const model = genAI.getGenerativeModel({ 
+        model: 'gemini-2.5-flash',
+        generationConfig: {
+          temperature: 0.7,
+          topK: 40,
+          topP: 0.95,
+          maxOutputTokens: 2048,
+        }
+      });
+
+      // Create personalized summary prompt
+      const summaryPrompt = `Please provide a comprehensive summary of the team chat activity from the last ${period.toLowerCase()} for ${userName}. 
+
+Here are the team chat messages in chronological order:
+
+${formattedMessages}
+
+Please create a personalized summary that includes:
+- Key topics and discussions that occurred
+- Important decisions or action items mentioned
+- Notable insights or information shared by Astra
+- Any mentions of ${userName} or topics relevant to them
+- Overall team activity and engagement patterns
+
+Format the summary in a clear, organized way that helps ${userName} quickly understand what they may have missed and what's important for them to know.`;
+
+      console.log('🤖 Generating chat summary with Gemini...');
+      
+      const result = await model.generateContent(summaryPrompt);
+      const response = await result.response;
+      const summaryText = response.text();
+      
+      console.log('✅ Chat summary generated successfully');
       
       setSummaryResult(summaryText);
     } catch (error) {
       console.error('Error getting chat summary:', error);
-      setSummaryResult("I'm sorry, I'm having trouble generating the summary right now. Please try again in a moment.");
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      setSummaryResult(`I'm sorry, I'm having trouble generating the summary right now. Error: ${errorMessage}. Please try again in a moment.`);
     } finally {
       setIsSummarizing(false);
     }
-  }, [user]);
+  }, [user, getUserName]);
 
   // Get user's display name
   const getUserName = useCallback(async (): Promise<string> => {
