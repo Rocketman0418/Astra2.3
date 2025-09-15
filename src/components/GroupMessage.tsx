@@ -13,14 +13,20 @@ interface GroupMessageProps {
 // Helper function to extract media info from message content
 const extractMediaInfo = (content: string) => {
   const mediaRegex = /\[(🖼️|🎥|📄)\s+([^\]]+)\]/g;
-  const mediaItems: Array<{type: string, name: string, emoji: string}> = [];
+  const mediaItems: Array<{type: string, name: string, emoji: string, preview?: string}> = [];
   let match;
   
   while ((match = mediaRegex.exec(content)) !== null) {
     const emoji = match[1];
     const name = match[2];
     const type = emoji === '🖼️' ? 'image' : emoji === '🎥' ? 'video' : 'pdf';
-    mediaItems.push({ type, name, emoji });
+    
+    // Extract preview URL if it exists (format: filename|||previewUrl)
+    const parts = name.split('|||');
+    const fileName = parts[0];
+    const previewUrl = parts[1];
+    
+    mediaItems.push({ type, name: fileName, emoji, preview: previewUrl });
   }
   
   return {
@@ -241,7 +247,54 @@ export const GroupMessage: React.FC<GroupMessageProps> = ({
           )}
 
           <div className="break-words text-sm leading-relaxed">
-            {/* Text content */}
+            {/* Media content */}
+            {hasMedia && (
+              <div className="space-y-3 mb-3">
+                {mediaItems.map((media, index) => (
+                  <div key={index} className="rounded-lg overflow-hidden bg-gray-600/20 border border-gray-600/30">
+                    {media.type === 'image' && media.preview ? (
+                      <div className="relative">
+                        <img
+                          src={media.preview}
+                          alt={media.name}
+                          className="w-full max-w-sm h-auto max-h-64 object-cover rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
+                          onClick={() => window.open(media.preview, '_blank')}
+                        />
+                        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-3">
+                          <div className="text-white text-sm font-medium truncate">
+                            {media.name}
+                          </div>
+                          <div className="text-gray-300 text-xs">
+                            Click to view full size
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex items-center space-x-3 p-3">
+                        <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${
+                          media.type === 'video' ? 'bg-purple-500/20' : 'bg-green-500/20'
+                        }`}>
+                          <span className="text-2xl">{media.emoji}</span>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-medium text-gray-200 truncate">
+                            {media.name}
+                          </div>
+                          <div className="text-xs text-gray-400 capitalize">
+                            {media.type} file
+                          </div>
+                        </div>
+                        <button className="text-xs text-blue-300 hover:text-blue-200 underline px-2 py-1 rounded">
+                          View
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+            
+            {/* Text content - now appears below media */}
             {finalText && (
               <div className="mb-2">
                 {isOwnMessage && !isAstraMessage ? (
@@ -249,28 +302,6 @@ export const GroupMessage: React.FC<GroupMessageProps> = ({
                 ) : (
                   formatMessageContent(finalText, message.mentions, isAstraMessage)
                 )}
-              </div>
-            )}
-            
-            {/* Media content */}
-            {hasMedia && (
-              <div className="space-y-2">
-                {mediaItems.map((media, index) => (
-                  <div key={index} className="flex items-center space-x-2 p-2 bg-gray-600/30 rounded-lg">
-                    <span className="text-lg">{media.emoji}</span>
-                    <div className="flex-1 min-w-0">
-                      <div className="text-sm font-medium text-gray-200 truncate">
-                        {media.name}
-                      </div>
-                      <div className="text-xs text-gray-400 capitalize">
-                        {media.type} file
-                      </div>
-                    </div>
-                    <button className="text-xs text-blue-300 hover:text-blue-200 underline">
-                      View
-                    </button>
-                  </div>
-                ))}
               </div>
             )}
           </div>

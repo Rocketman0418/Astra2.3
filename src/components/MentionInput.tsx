@@ -329,8 +329,19 @@ export const MentionInput: React.FC<MentionInputProps> = ({
         preview: media.preview
       }));
       
-      // Send message with media data
-      onSend(messageContent, mediaInfo);
+      // Create media text with preview URLs for images
+      const mediaText = attachedMedia.map(media => {
+        const emoji = media.type === 'image' ? '🖼️' : media.type === 'video' ? '🎥' : '📄';
+        // Include preview URL for images so they can be displayed
+        const nameWithPreview = media.type === 'image' ? `${media.file.name}|||${media.preview}` : media.file.name;
+        return `[${emoji} ${nameWithPreview}]`;
+      }).join(' ');
+      
+      // Combine media and text - media first, then text
+      const fullMessage = messageContent ? `${mediaText}\n\n${messageContent}` : mediaText;
+      
+      // Send combined message
+      onSend(fullMessage);
       
       // Clean up object URLs
       attachedMedia.forEach(media => URL.revokeObjectURL(media.preview));
