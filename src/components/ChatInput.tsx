@@ -1,5 +1,5 @@
 import React, { KeyboardEvent } from 'react';
-import { Send, Star, X } from 'lucide-react';
+import { Send, Star, X, Reply } from 'lucide-react';
 import { FavoritesDropdown } from './FavoritesDropdown';
 import { FavoriteMessage, ReplyState } from '../types';
 
