@@ -191,25 +191,26 @@ export const GroupChat: React.FC<GroupChatProps> = ({ showTeamMenu = false, onCl
         }
       });
 
-      // Create personalized summary prompt
-      const summaryPrompt = `Please provide a comprehensive summary of the team chat activity from the last ${period.toLowerCase()} for ${userName}. 
+      const summaryPrompt = `Please provide a brief summary of the team chat activity from the last ${period.toLowerCase()}.
 
-Here are the team chat messages in chronological order:
+Focus on:
+- Key topics discussed
+- Important decisions made
+- Action items or tasks mentioned
+- Notable insights or solutions shared
+- Overall team collaboration patterns
 
-${formattedMessages}
+Here are the messages:
 
-- Overall team activity and engagement patterns
-
-Format the summary in a clear, organized way that helps ${userName} quickly understand what they may have missed and what's important for them to know.`;
+${formattedMessages}`;
 
      console.log('🤖 Sending request to Gemini...');
      console.log('🤖 Prompt length:', summaryPrompt.length);
      
-      console.log('🤖 Generating chat summary with Gemini...');
-      
       const result = await model.generateContent(summaryPrompt);
       const response = await result.response;
       
+      console.log('🤖 Generating chat summary with Gemini...');
       console.log('🤖 Raw Gemini result:', result);
       console.log('🤖 Raw Gemini response:', response);
       
