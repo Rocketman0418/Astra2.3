@@ -316,13 +316,13 @@ export const useChat = () => {
         }
       }
       
-      const errorMessage: Message = {
+      const errorMessageObj: Message = {
         id: `${messageId}-error`,
         text: errorMessage,
         isUser: false,
         timestamp: new Date()
       };
-      setMessages(prev => [...prev, errorMessage]);
+      setMessages(prev => [...prev, errorMessageObj]);
     } finally {
       setIsLoading(false);
     }
