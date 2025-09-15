@@ -144,7 +144,7 @@ const formatTime = (timestamp: string): string => {
   }
 };
 
-export const GroupMessage: React.FC<GroupMessageProps> = ({
+export const MentionInput: React.FC<GroupMessageProps> = ({
   message,
   currentUserId,
   onViewVisualization,
