@@ -683,7 +683,7 @@ ${finalSummary}
   if (showTeamMenu) {
     return (
       <div className="flex h-full">
-        {/* Team Menu Sidebar - Desktop */}
+        {/* Team Menu Sidebar - Desktop - Match Chat History width */}
         <div className="hidden lg:block w-80 bg-gray-800 border-r border-gray-700 flex flex-col">
           <div className="p-4 border-b border-gray-700">
             <div className="flex items-center justify-between mb-4">
@@ -855,7 +855,7 @@ ${finalSummary}
         </div>
 
         {/* Team Menu Mobile - Top Bar */}
-        <div className="lg:hidden bg-gray-800 border-b border-gray-700 p-4">
+        <div className="lg:hidden bg-gray-800 border-b border-gray-700 p-4 w-full">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center space-x-2">
               <Menu className="w-5 h-5 text-blue-400" />
@@ -1010,7 +1010,7 @@ ${finalSummary}
         </div>
 
         {/* Main Chat Area - Full width on mobile, with sidebar on desktop */}
-        <div className="flex-1 flex flex-col lg:flex-1">
+        <div className="flex-1 flex flex-col">
           {/* Messages */}
           <div className="flex-1 overflow-y-auto p-2 lg:p-4 space-y-1 chat-messages-container">
             {loading ? (
