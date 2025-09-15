@@ -259,26 +259,26 @@ Format the summary in a clear, organized way that helps ${userName} quickly unde
   }, []);
 
   // Handle sending messages
-  const handleSendMessage = async (message: string) => {
+  const handleSendMessage = async (message: string, mediaInfo?: Array<{name: string, size: number, type: string, preview: string}>) => {
     if (!message.trim()) return;
     
-    await sendMessage(message);
+    // If there's media, store it in the message metadata
+    if (mediaInfo && mediaInfo.length > 0) {
+      // For now, we'll include media info in the message content
+      // In production, you'd upload to a storage service and get URLs
+      const mediaText = mediaInfo.map(media => 
+        `[${media.type === 'image' ? '🖼️' : media.type === 'video' ? '🎥' : '📄'} ${media.name}]`
+      ).join(' ');
+      
+      const fullMessage = message ? `${message}\n\n${mediaText}` : mediaText;
+      await sendMessage(fullMessage);
+    } else {
+      await sendMessage(message);
+    }
+    
     setInputValue('');
   };
 
-  // Handle media upload
-  const handleMediaUpload = async (file: File) => {
-    console.log('📎 Media upload requested:', {
-      name: file.name,
-      size: file.size,
-      type: file.type
-    });
-    
-    // For now, just show a placeholder message
-    // In a real implementation, you would upload to a file storage service
-    const mediaMessage = `📎 Uploaded ${file.type.startsWith('image/') ? 'image' : 'video'}: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)}MB)`;
-    await sendMessage(mediaMessage);
-  };
 
   // Handle visualization creation
   const handleCreateVisualization = useCallback(async (messageId: string, messageContent: string) => {
@@ -652,8 +652,6 @@ Format the summary in a clear, organized way that helps ${userName} quickly unde
               disabled={loading}
               placeholder="Type a message... Use @astra for AI Intelligence"
               users={users}
-            onMediaUpload={handleMediaUpload}
-            />
           </div>
         </div>
       </div>

@@ -10,6 +10,25 @@ interface GroupMessageProps {
   visualizationState?: any;
 }
 
+// Helper function to extract media info from message content
+const extractMediaInfo = (content: string) => {
+  const mediaRegex = /\[(🖼️|🎥|📄)\s+([^\]]+)\]/g;
+  const mediaItems: Array<{type: string, name: string, emoji: string}> = [];
+  let match;
+  
+  while ((match = mediaRegex.exec(content)) !== null) {
+    const emoji = match[1];
+    const name = match[2];
+    const type = emoji === '🖼️' ? 'image' : emoji === '🎥' ? 'video' : 'pdf';
+    mediaItems.push({ type, name, emoji });
+  }
+  
+  return {
+    mediaItems,
+    textContent: content.replace(mediaRegex, '').trim()
+  };
+};
+
 const formatMessageContent = (content: string, mentions: string[], isAstraMessage: boolean = false): JSX.Element => {
   if (isAstraMessage) {
     // Use the same formatting logic as private chat for Astra messages
@@ -131,13 +150,17 @@ export const GroupMessage: React.FC<GroupMessageProps> = ({
   const hasVisualization = message.visualization_data;
   const isGeneratingVisualization = visualizationState?.isGenerating || false;
   
+  // Extract media info from message content
+  const { mediaItems, textContent } = extractMediaInfo(message.message_content);
+  const hasMedia = mediaItems.length > 0;
+  
   // Message expansion logic
   const [isExpanded, setIsExpanded] = React.useState(false);
-  const isLongMessage = message.message_content.length > 300;
+  const isLongMessage = textContent.length > 300;
   const shouldTruncate = isLongMessage && !isExpanded;
   const displayText = shouldTruncate 
-    ? message.message_content.substring(0, 300) + '...'
-    : message.message_content;
+    ? textContent.substring(0, 300) + '...'
+    : textContent;
 
   const lines = displayText.split('\n');
   const shouldShowMore = lines.length > 5 && !isExpanded;
@@ -218,10 +241,37 @@ export const GroupMessage: React.FC<GroupMessageProps> = ({
           )}
 
           <div className="break-words text-sm leading-relaxed">
-            {isOwnMessage && !isAstraMessage ? (
-              <div className="whitespace-pre-wrap">{finalText}</div>
-            ) : (
-              formatMessageContent(finalText, message.mentions, isAstraMessage)
+            {/* Text content */}
+            {finalText && (
+              <div className="mb-2">
+                {isOwnMessage && !isAstraMessage ? (
+                  <div className="whitespace-pre-wrap">{finalText}</div>
+                ) : (
+                  formatMessageContent(finalText, message.mentions, isAstraMessage)
+                )}
+              </div>
+            )}
+            
+            {/* Media content */}
+            {hasMedia && (
+              <div className="space-y-2">
+                {mediaItems.map((media, index) => (
+                  <div key={index} className="flex items-center space-x-2 p-2 bg-gray-600/30 rounded-lg">
+                    <span className="text-lg">{media.emoji}</span>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-medium text-gray-200 truncate">
+                        {media.name}
+                      </div>
+                      <div className="text-xs text-gray-400 capitalize">
+                        {media.type} file
+                      </div>
+                    </div>
+                    <button className="text-xs text-blue-300 hover:text-blue-200 underline">
+                      View
+                    </button>
+                  </div>
+                ))}
+              </div>
             )}
           </div>
           

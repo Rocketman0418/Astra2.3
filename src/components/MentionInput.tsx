@@ -10,7 +10,7 @@ interface User {
 interface MentionInputProps {
   value: string;
   onChange: (value: string) => void;
-  onSend: (message: string) => void;
+  onSend: (message: string, mediaInfo?: Array<{name: string, size: number, type: string, preview: string}>) => void;
   disabled: boolean;
   placeholder?: string;
   users?: User[];
@@ -313,19 +313,27 @@ export const MentionInput: React.FC<MentionInputProps> = ({
   const handleSubmitWithMedia = () => {
     if ((!value.trim() && attachedMedia.length === 0) || disabled) return;
 
-    // If there's media, handle media upload first
-    if (attachedMedia.length > 0 && onMediaUpload) {
-      attachedMedia.forEach(media => {
-        onMediaUpload(media.file);
-      });
-      // Clear attached media
+    // Create message with both text and media
+    let messageContent = value.trim();
+    
+    // If there's media, add media info to the message
+    if (attachedMedia.length > 0) {
+      const mediaInfo = attachedMedia.map(media => ({
+        name: media.file.name,
+        size: media.file.size,
+        type: media.type,
+        preview: media.preview
+      }));
+      
+      // Send message with media data
+      onSend(messageContent, mediaInfo);
+      
+      // Clean up object URLs
       attachedMedia.forEach(media => URL.revokeObjectURL(media.preview));
       setAttachedMedia([]);
-    }
-
-    // Send text message if there's text
-    if (value.trim()) {
-      onSend(value);
+    } else {
+      // Send text-only message
+      onSend(messageContent);
     }
 
     setShowEmojiPicker(false);
