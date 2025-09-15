@@ -92,15 +92,6 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
 }) => {
   const isLongMessage = message.text.length > 300;
   const shouldTruncate = isLongMessage && !message.isExpanded;
-  const displayText = shouldTruncate 
-    ? message.text.substring(0, 300) + '...'
-    : message.text;
-
-  const lines = displayText.split('\n');
-  const shouldShowMore = lines.length > 5 && !message.isExpanded;
-  const finalText = shouldShowMore 
-    ? lines.slice(0, 5).join('\n') + '...'
-    : displayText;
 
   // Check if message has visualization data stored in database
   const hasStoredVisualization = message.visualization || message.hasStoredVisualization;
@@ -123,10 +114,20 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
     return message.text;
   };
   
-  const displayText = isReplyMessage ? getReplyContent() : message.text;
-  const finalDisplayText = shouldTruncate 
-    ? displayText.substring(0, 300) + '...'
-    : displayText;
+  // Get the base text content (handle reply messages)
+  const baseText = isReplyMessage ? getReplyContent() : message.text;
+  
+  // Apply truncation if needed
+  const truncatedText = shouldTruncate 
+    ? baseText.substring(0, 300) + '...'
+    : baseText;
+
+  // Check for line-based truncation
+  const lines = truncatedText.split('\n');
+  const shouldShowMore = lines.length > 5 && !message.isExpanded;
+  const finalText = shouldShowMore 
+    ? lines.slice(0, 5).join('\n') + '...'
+    : truncatedText;
 
   // Special styling for centered welcome message
   if (message.isCentered) {
@@ -179,10 +180,10 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                   💬 Reply
                 </div>
               )}
-              <div className="whitespace-pre-wrap">{finalDisplayText}</div>
+              <div className="whitespace-pre-wrap">{finalText}</div>
             </>
           ) : (
-            formatMessageText(finalDisplayText)
+            formatMessageText(finalText)
           )}
         </div>
         
