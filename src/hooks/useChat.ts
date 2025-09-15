@@ -59,8 +59,15 @@ export const useChat = () => {
     console.log('useChat: currentMessages changed', { 
       currentMessagesLength: currentMessages.length, 
       currentConversationId, 
-      chatsLoading 
+      chatsLoading,
+      isLoading
     });
+    
+    // Don't reset messages while we're actively sending/receiving
+    if (isLoading) {
+      console.log('useChat: Skipping message update - currently loading');
+      return;
+    }
     
     if (currentMessages.length > 0) {
       const uiMessages: Message[] = [];
@@ -108,7 +115,12 @@ export const useChat = () => {
       ]);
     } else if (!currentConversationId || (currentMessages.length === 0 && !chatsLoading && !isLoading)) {
       // Reset to welcome message for new conversations
-      console.log('useChat: Resetting to welcome message');
+      console.log('useChat: Resetting to welcome message', {
+        hasConversationId: !!currentConversationId,
+        currentMessagesLength: currentMessages.length,
+        chatsLoading,
+        isLoading
+      });
       setMessages([
         {
           id: 'welcome',
@@ -119,7 +131,7 @@ export const useChat = () => {
         }
       ]);
     }
-  }, [currentMessages, currentConversationId, chatsLoading, isLoading]);
+  }, [currentMessages, currentConversationId, chatsLoading]);
 
   // Load the most recent conversation when component mounts or when returning to private chat
   useEffect(() => {
