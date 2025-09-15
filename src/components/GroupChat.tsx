@@ -193,7 +193,11 @@ export const GroupChat: React.FC<GroupChatProps> = ({ showTeamMenu = false, onCl
 
       const summaryPrompt = `Please provide a brief summary of the team chat activity from the last ${period.toLowerCase()}.
 
-Please organize your response into exactly 3 sections with a target of 500 words total:
+Please organize your response into exactly 3 sections with a target of ${
+  period === '24 Hours' ? '200 words' : 
+  period === '7 Days' ? '300 words' : 
+  '500 words'
+} total:
 
 **Activity:**
 - Who posted messages and how frequently
