@@ -87,7 +87,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
   isFavorited = false,
   onCreateVisualization,
   onViewVisualization,
-  visualizationState
+ visualizationState,
  onReply
 }) => {
   const isLongMessage = message.text.length > 300;
