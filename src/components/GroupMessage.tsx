@@ -352,7 +352,7 @@ export const GroupMessage: React.FC<GroupMessageProps> = ({
                   className="flex items-center space-x-1 bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 text-white px-2 py-2 rounded-lg text-xs font-medium transition-all duration-200 transform hover:scale-105"
                   title="Generate a new visualization"
                 >
-                  <RefreshCw className="w-3 h-3" />
+                <div className="whitespace-pre-wrap text-white">{finalText}</div>
                   <span className="hidden sm:inline">Retry</span>
                 </button>
               )}

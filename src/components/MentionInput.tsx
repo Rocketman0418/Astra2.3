@@ -351,6 +351,8 @@ export const MentionInput: React.FC<MentionInputProps> = ({
       onSend(messageContent);
     }
 
+    // Clear input and media after sending
+    onChange('');
     setShowEmojiPicker(false);
   };
 
