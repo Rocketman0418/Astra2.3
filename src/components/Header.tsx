@@ -20,13 +20,13 @@ export const Header: React.FC<HeaderProps> = ({
 
   return (
     <header className="fixed top-0 left-0 right-0 z-40 bg-gradient-to-r from-blue-600 to-purple-700 shadow-lg px-4 h-16">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between h-full py-1">
         {/* Left side - Menu button */}
         <div className="flex items-center space-x-2">
           {showSidebarToggle && (
             <button
               onClick={onToggleSidebar}
-              className="p-2 hover:bg-blue-700 rounded-lg transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center touch-manipulation my-2"
+              className="p-2 hover:bg-blue-700 rounded-lg transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center touch-manipulation"
             >
               <Menu className="w-6 h-6 text-white" />
             </button>
@@ -36,7 +36,7 @@ export const Header: React.FC<HeaderProps> = ({
           {chatMode === 'team' && (
             <button
               onClick={onToggleTeamMenu}
-              className="p-2 hover:bg-blue-700 rounded-lg transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center touch-manipulation my-2"
+              className="p-2 hover:bg-blue-700 rounded-lg transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center touch-manipulation"
             >
               <Menu className="w-6 h-6 text-white" />
             </button>
@@ -44,7 +44,7 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
 
         {/* Center - Logo and title */}
-        <div className="flex items-center space-x-3 my-2">
+        <div className="flex items-center space-x-3">
           {/* Company logo */}
           <img 
             src="/RocketHub Logo Alt 1 Small.png" 
@@ -62,7 +62,7 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
 
         {/* Right side - User info */}
-        <div className="flex items-center space-x-2 my-2">
+        <div className="flex items-center space-x-2">
           <div className="hidden sm:block text-right">
             <p className="text-white text-sm font-medium">
               {user?.user_metadata?.full_name || 'User'}
