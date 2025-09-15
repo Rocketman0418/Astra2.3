@@ -42,6 +42,7 @@ export const GroupChat: React.FC<GroupChatProps> = ({ showSearch = false, showMe
   const [showSummaryOptions, setShowSummaryOptions] = useState(false);
   const [isSummarizing, setIsSummarizing] = useState(false);
   const [summaryResult, setSummaryResult] = useState<string | null>(null);
+  const [isCreatingVisualization, setIsCreatingVisualization] = useState(false);
 
   // Get user's display name
   const getUserName = useCallback(async (): Promise<string> => {
@@ -244,12 +245,12 @@ Format the summary in a clear, organized way that helps ${userName} quickly unde
   // Auto-scroll to bottom
   useEffect(() => {
     // Only auto-scroll to bottom if we're not highlighting a specific message
-    if (!messageToHighlight) {
+    if (!messageToHighlight && !isCreatingVisualization) {
       setTimeout(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
       }, 100);
     }
-  }, [messages, isAstraThinking, visualizationStates, messageToHighlight]);
+  }, [messages, isAstraThinking, visualizationStates, messageToHighlight, isCreatingVisualization]);
 
   // Also scroll to bottom when component mounts
   useEffect(() => {
@@ -269,6 +270,8 @@ Format the summary in a clear, organized way that helps ${userName} quickly unde
   // Handle visualization creation
   const handleCreateVisualization = useCallback(async (messageId: string, messageContent: string) => {
     console.log('🎯 Starting visualization generation for message:', messageId);
+    
+    setIsCreatingVisualization(true);
     
     // Set generating state immediately
     setVisualizationStates(prev => ({
@@ -303,6 +306,9 @@ Format the summary in a clear, organized way that helps ${userName} quickly unde
         ...prev,
         [messageId]: { isGenerating: false, content: null, hasVisualization: false }
       }));
+    }
+    finally {
+      setIsCreatingVisualization(false);
     }
   }, [generateVisualization, getVisualization, updateVisualizationData]);
 

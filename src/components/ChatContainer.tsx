@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useCallback } from 'react';
+import React, { useEffect, useRef, useCallback, useState } from 'react';
 import { MessageBubble } from './MessageBubble';
 import { LoadingIndicator } from './LoadingIndicator';
 import { ChatInput } from './ChatInput';
@@ -25,6 +25,7 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({
   onNewChatStarted
 }) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [isCreatingVisualization, setIsCreatingVisualization] = useState(false);
   const {
     messages,
     isLoading,
@@ -79,6 +80,8 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({
   const handleCreateVisualization = useCallback(async (messageId: string, messageContent: string) => {
     console.log('🎯 Private chat: Starting visualization generation for message:', messageId);
     
+    setIsCreatingVisualization(true);
+    
     // Set generating state immediately
     updateVisualizationState(messageId, { isGenerating: true, content: null });
 
@@ -104,6 +107,9 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({
         content: null, 
         hasVisualization: false 
       });
+    }
+    finally {
+      setIsCreatingVisualization(false);
     }
   }, [generateVisualization, updateVisualizationState]);
 
@@ -181,13 +187,13 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({
   // Handle viewport adjustments for mobile keyboards
   useEffect(() => {
     // Only auto-scroll to bottom if we're not highlighting a specific message
-    if (!messageToHighlight) {
+    if (!messageToHighlight && !isCreatingVisualization) {
       messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }
     
     const handleResize = () => {
       // Force scroll to bottom when keyboard appears/disappears
-      if (!messageToHighlight) {
+      if (!messageToHighlight && !isCreatingVisualization) {
         setTimeout(() => {
           messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
         }, 100);
@@ -196,7 +202,7 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({
 
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
-  }, [messagesEndRef, messages, messageToHighlight]);
+  }, [messagesEndRef, messages, messageToHighlight, isCreatingVisualization]);
 
   // Show visualization view if one is currently active
   if (currentVisualization) {
