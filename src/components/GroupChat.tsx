@@ -280,6 +280,10 @@ Format the summary in a clear, organized way that helps ${userName} quickly unde
   };
 
   // Handle media upload
+  const handleMediaUpload = (files: File[]) => {
+    // Handle media upload logic here
+    console.log('Media files uploaded:', files);
+  };
 
   // Handle visualization creation
   const handleCreateVisualization = useCallback(async (messageId: string, messageContent: string) => {
@@ -653,7 +657,9 @@ Format the summary in a clear, organized way that helps ${userName} quickly unde
               disabled={loading}
               placeholder="Type a message... Use @astra for AI Intelligence"
               users={users}
+              onMediaUpload={handleMediaUpload}
             />
+          </div>
         </div>
       </div>
     );
