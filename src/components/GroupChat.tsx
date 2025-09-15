@@ -39,7 +39,8 @@ export const GroupChat: React.FC<GroupChatProps> = ({ showSearch = false, showMe
   const [searchResults, setSearchResults] = useState<GroupMessageType[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [visualizationStates, setVisualizationStates] = useState<Record<string, any>>({});
-  const [showSummaryOptions, setShowSummaryOptions] = useState(false);
+  const [showSummaryOptions, setShowSummaryOptions]
+} = useState(false);
   const [isSummarizing, setIsSummarizing] = useState(false);
   const [summaryResult, setSummaryResult] = useState<string | null>(null);
 
