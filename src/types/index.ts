@@ -7,6 +7,7 @@ export interface Message {
   isExpanded?: boolean;
   visualization?: string;
   isCentered?: boolean;
+  isFavorited?: boolean;
 }
 
 export interface VisualizationState {
@@ -29,6 +30,12 @@ export interface GroupMessage {
   metadata?: any;
   created_at: string;
   updated_at: string;
+}
+
+export interface FavoriteMessage {
+  id: string;
+  text: string;
+  createdAt: Date;
 }
 
 export type ChatMode = 'private' | 'team';

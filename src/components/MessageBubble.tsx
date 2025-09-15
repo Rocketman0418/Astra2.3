@@ -1,4 +1,5 @@
 import React from 'react';
+import { Star } from 'lucide-react';
 import { VisualizationButton } from './VisualizationButton';
 import { Message } from '../types';
 
@@ -71,6 +72,8 @@ const formatMessageText = (text: string): JSX.Element => {
 interface MessageBubbleProps {
   message: Message;
   onToggleExpansion: (messageId: string) => void;
+  onToggleFavorite?: (messageId: string, text: string) => void;
+  isFavorited?: boolean;
   onCreateVisualization?: (messageId: string, messageText: string) => void;
   onViewVisualization?: (messageId: string) => void;
   visualizationState?: any;
@@ -79,6 +82,8 @@ interface MessageBubbleProps {
 export const MessageBubble: React.FC<MessageBubbleProps> = ({
   message,
   onToggleExpansion,
+  onToggleFavorite,
+  isFavorited = false,
   onCreateVisualization,
   onViewVisualization,
   visualizationState
@@ -161,6 +166,24 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
             minute: '2-digit' 
           })}
         </div>
+        
+        {/* Favorite button for user messages */}
+        {message.isUser && onToggleFavorite && (
+          <div className="mt-2 md:mt-3">
+            <button
+              onClick={() => onToggleFavorite(message.id, message.text)}
+              className={`flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 transform hover:scale-105 min-h-[44px] touch-manipulation ${
+                isFavorited
+                  ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30'
+                  : 'bg-gray-700/50 text-gray-300 hover:bg-gray-600/50'
+              }`}
+              title={isFavorited ? 'Remove from favorites' : 'Add to favorites'}
+            >
+              <Star className={`w-4 h-4 ${isFavorited ? 'fill-current' : ''}`} />
+              <span>{isFavorited ? 'Favorited' : 'Add to Favorites'}</span>
+            </button>
+          </div>
+        )}
         
         {!message.isUser && onCreateVisualization && onViewVisualization && (
           <div className="mt-2 md:mt-3">

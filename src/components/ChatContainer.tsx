@@ -4,6 +4,7 @@ import { LoadingIndicator } from './LoadingIndicator';
 import { ChatInput } from './ChatInput';
 import { VisualizationView } from './VisualizationView';
 import { useChat } from '../hooks/useChat';
+import { useFavorites } from '../hooks/useFavorites';
 import { useVisualization } from '../hooks/useVisualization';
 
 interface ChatContainerProps {
@@ -38,6 +39,13 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({
     getVisualizationState,
     updateVisualizationState
   } = useChat();
+  
+  const {
+    favorites,
+    toggleFavorite,
+    isFavorited,
+    removeFromFavorites
+  } = useFavorites();
 
   const {
     generateVisualization,
@@ -177,6 +185,8 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({
                 onToggleExpansion={toggleMessageExpansion}
                 onCreateVisualization={handleCreateVisualization}
                 onViewVisualization={handleViewVisualization}
+                onToggleFavorite={toggleFavorite}
+                isFavorited={isFavorited(message.id)}
                 visualizationState={getVisualizationState(message.id)}
               />
             </div>
@@ -194,6 +204,8 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({
           onChange={setInputValue}
           onSend={sendMessage}
           disabled={isLoading}
+          favorites={favorites}
+          onRemoveFavorite={removeFromFavorites}
         />
       </div>
     </div>

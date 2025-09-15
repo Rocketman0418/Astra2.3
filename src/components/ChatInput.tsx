@@ -1,18 +1,24 @@
 import React, { KeyboardEvent } from 'react';
-import { Send } from 'lucide-react';
+import { Send, Star } from 'lucide-react';
+import { FavoritesDropdown } from './FavoritesDropdown';
+import { FavoriteMessage } from '../types';
 
 interface ChatInputProps {
   value: string;
   onChange: (value: string) => void;
   onSend: (message: string) => void;
   disabled: boolean;
+  favorites?: FavoriteMessage[];
+  onRemoveFavorite?: (messageId: string) => void;
 }
 
 export const ChatInput: React.FC<ChatInputProps> = ({
   value,
   onChange,
   onSend,
-  disabled
+  disabled,
+  favorites = [],
+  onRemoveFavorite
 }) => {
   const handleKeyPress = (e: KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -27,9 +33,22 @@ export const ChatInput: React.FC<ChatInputProps> = ({
     }
   };
 
+  const handleSelectFavorite = (text: string) => {
+    onChange(text);
+  };
+
   return (
     <div className="bg-gray-900 border-t border-gray-700 p-3 md:p-4 safe-area-padding-bottom">
       <div className="flex items-end space-x-2 md:space-x-3 max-w-4xl mx-auto">
+        {/* Favorites dropdown */}
+        {onRemoveFavorite && (
+          <FavoritesDropdown
+            favorites={favorites}
+            onSelectFavorite={handleSelectFavorite}
+            onRemoveFavorite={onRemoveFavorite}
+          />
+        )}
+        
         <div className="flex-1 relative">
           <textarea
             value={value}
@@ -45,6 +64,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
             }}
           />
         </div>
+        
         <button
           onClick={handleSubmit}
           disabled={disabled || !value.trim()}
