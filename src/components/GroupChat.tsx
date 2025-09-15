@@ -442,7 +442,10 @@ Format the summary in a clear, organized way that helps ${userName} quickly unde
               </div>
               <button
                 onClick={onCloseTeamMenu}
-                className="p-2 hover:bg-gray-700 rounded-lg transition-colors"
+                className="p-2 hov
+    )
+  }
+}er:bg-gray-700 rounded-lg transition-colors"
               >
                 <X className="w-5 h-5 text-gray-400" />
               </button>
@@ -676,6 +679,85 @@ Format the summary in a clear, organized way that helps ${userName} quickly unde
           </div>
         </div>
       </div>
+    </>
+  );
+
+  return (
+    <>
+      {/* Team Members Modal */}
+      {membersModal}
+      
+      <div className="flex flex-col h-full">
+        {/* Messages */}
+        <div className="flex-1 overflow-y-auto p-4 space-y-1 chat-messages-container">
+          {loading ? (
+            <div className="flex items-center justify-center h-32">
+              <div className="text-center">
+                <div className="w-8 h-8 border-2 border-blue-500/30 border-t-blue-500 rounded-full animate-spin mx-auto mb-2" />
+                <p className="text-gray-400 text-sm">Loading messages...</p>
+              </div>
+            </div>
+          ) : messages.length === 0 ? (
+            <div className="flex items-center justify-center h-32">
+              <div className="text-center">
+                <Users className="w-12 h-12 text-gray-600 mx-auto mb-2" />
+                <p className="text-gray-400 text-sm">No messages yet</p>
+                <p className="text-gray-500 text-xs mt-1">Start the conversation!</p>
+              </div>
+            </div>
+          ) : (
+            <>
+              {messages.map((message) => (
+                <div key={message.id} id={`message-${message.id}`}>
+                  <GroupMessage
+                    message={message}
+                    currentUserId={user?.id || ''}
+                    currentUserEmail={user?.email || ''}
+                    onViewVisualization={handleViewVisualization}
+                    onCreateVisualization={handleCreateVisualization}
+                    visualizationState={getVisualizationState(message.id)}
+                  />
+                </div>
+              ))}
+
+              {isAstraThinking && (
+                <div className="flex justify-start mb-4">
+                  <div className="flex-shrink-0 mr-3">
+                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center text-sm">
+                      🚀
+                    </div>
+                  </div>
+                  <div className="bg-gradient-to-br from-gray-700 to-gray-800 text-white rounded-2xl px-4 py-3 border border-blue-500/20">
+                    <div className="flex items-center space-x-2">
+                      <span className="text-sm">Astra is thinking</span>
+                      <div className="flex space-x-1">
+                        <div className="w-1 h-1 bg-white rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                        <div className="w-1 h-1 bg-white rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                        <div className="w-1 h-1 bg-white rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <div ref={messagesEndRef} />
+            </>
+          )}
+        </div>
+
+        {/* Input */}
+        <div className="bg-gray-900 border-t border-gray-700 p-4">
+          <MentionInput
+            value={inputValue}
+            onChange={setInputValue}
+            onSend={handleSendMessage}
+            disabled={loading}
+            placeholder="Type a message... Use @astra for AI Intelligence"
+            users={users}
+          />
+        </div>
+      </div>
+    </>
     );
   }
 
