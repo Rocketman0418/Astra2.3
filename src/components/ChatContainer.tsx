@@ -72,7 +72,26 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({
   const getLocalVisualizationState = useCallback((messageId: string) => {
     const localState = visualizationStates[messageId];
     console.log('🔍 ChatContainer: Getting visualization state for messageId:', messageId, 'localState:', localState);
-    return localState || null;
+    
+    // If we have local state, use it
+    if (localState) {
+      return localState;
+    }
+    
+    // Check if the message has stored visualization in database
+    const message = messages.find(m => m.chatId === messageId);
+    if (message?.hasStoredVisualization) {
+      console.log('🔍 ChatContainer: Message has stored visualization, returning database state');
+      return {
+        messageId,
+        isGenerating: false,
+        content: 'stored_in_database',
+        hasVisualization: true,
+        isVisible: false
+      };
+    }
+    
+    return null;
   }, [visualizationStates]);
 
   // Register service worker for PWA

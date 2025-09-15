@@ -6,6 +6,7 @@ export interface Message {
   timestamp: Date;
   isExpanded?: boolean;
   visualization?: string;
+  hasStoredVisualization?: boolean;
   isCentered?: boolean;
   isFavorited?: boolean;
 }
