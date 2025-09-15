@@ -19,20 +19,29 @@ export const VisualizationButton: React.FC<VisualizationButtonProps> = ({
   console.log('🔍 VisualizationButton: Rendering for messageId:', messageId, 'visualizationState:', visualizationState);
   
   const handleClick = () => {
-    console.log('🔍 VisualizationButton: Button clicked for messageId:', messageId, 'visualizationState:', visualizationState);
-    console.log('🔍 VisualizationButton: About to call handler - isGenerating:', isGenerating, 'hasVisualization:', !!hasVisualization);
+    console.log('🖱️ VisualizationButton: Button clicked for messageId:', messageId);
+    console.log('🖱️ VisualizationButton: Current state - isGenerating:', isGenerating, 'hasVisualization:', !!hasVisualization);
+    console.log('🖱️ VisualizationButton: visualizationState.content exists:', !!visualizationState?.content);
+    
+    if (isGenerating) {
+      console.log('🖱️ VisualizationButton: Ignoring click - currently generating');
+      return; // Don't allow clicks while generating
+    }
     
     if (visualizationState?.content) {
-      console.log('🔍 VisualizationButton: Viewing existing visualization');
+      console.log('🖱️ VisualizationButton: Calling onViewVisualization with messageId:', messageId);
+      onViewVisualization(messageId);
+    } else if (hasVisualization) {
+      console.log('🖱️ VisualizationButton: Has visualization, calling onViewVisualization with messageId:', messageId);
       onViewVisualization(messageId);
     } else {
-      console.log('🔍 VisualizationButton: Creating new visualization');
+      console.log('🖱️ VisualizationButton: No visualization, calling onCreateVisualization with messageId:', messageId);
       onCreateVisualization(messageId, messageText);
     }
   };
 
   const handleTryAgain = () => {
-    console.log('🔍 VisualizationButton: Retry clicked for messageId:', messageId);
+    console.log('🔄 VisualizationButton: Retry clicked for messageId:', messageId);
     onCreateVisualization(messageId, messageText);
   };
 
@@ -46,6 +55,7 @@ export const VisualizationButton: React.FC<VisualizationButtonProps> = ({
     : 'Create Visualization';
 
   console.log('🔍 VisualizationButton: Button state - isGenerating:', isGenerating, 'hasVisualization:', hasVisualization, 'buttonText:', buttonText);
+  
   return (
     <div className="flex items-center space-x-2">
       <button
