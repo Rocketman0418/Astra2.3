@@ -30,6 +30,11 @@ export const MainContainer: React.FC = () => {
     setSidebarOpen(false);
   };
 
+  const handleSwitchToPrivateChat = (conversationId: string) => {
+    setChatMode('private');
+    setConversationToLoad(conversationId);
+  };
+
   const handleToggleTeamMenu = () => {
     setShowTeamMenu(!showTeamMenu);
   };
@@ -74,6 +79,7 @@ export const MainContainer: React.FC = () => {
             <GroupChat 
               showTeamMenu={showTeamMenu}
               onCloseTeamMenu={() => setShowTeamMenu(false)}
+              onSwitchToPrivateChat={handleSwitchToPrivateChat}
             />
           )}
         </div>

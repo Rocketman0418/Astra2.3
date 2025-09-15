@@ -26,9 +26,10 @@ interface UserWithCurrentFlag extends User {
 interface GroupChatProps {
   showTeamMenu?: boolean;
   onCloseTeamMenu?: () => void;
+  onSwitchToPrivateChat?: (conversationId: string) => void;
 }
 
-export const GroupChat: React.FC<GroupChatProps> = ({ showTeamMenu = false, onCloseTeamMenu }) => {
+export const GroupChat: React.FC<GroupChatProps> = ({ showTeamMenu = false, onCloseTeamMenu, onSwitchToPrivateChat }) => {
   const { user } = useAuth();
   const { logChatMessage } = useChats();
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -45,6 +46,7 @@ export const GroupChat: React.FC<GroupChatProps> = ({ showTeamMenu = false, onCl
   const [isCreatingVisualization, setIsCreatingVisualization] = useState(false);
   const [showMembersModal, setShowMembersModal] = useState(false);
   const [isCurrentUserAdmin, setIsCurrentUserAdmin] = useState(false);
+  const [onSwitchToPrivateChat, setOnSwitchToPrivateChat] = useState<((conversationId: string) => void) | null>(null);
 
   // Get user's display name
   const getUserName = useCallback(async (): Promise<string> => {
@@ -241,7 +243,74 @@ Format the summary in a clear, organized way that helps ${userName} quickly unde
       const finalSummary = summaryText.trim();
       
      console.log('✅ Final summary length:', finalSummary.length);
-      setSummaryResult(finalSummary);
+      
+      // Create a new private chat conversation with the summary
+      if (onSwitchToPrivateChat) {
+        try {
+          // Create the summary message with proper formatting
+          const summaryMessage = `# Team Chat Summary - Last ${period}
+
+${finalSummary}
+
+---
+*This summary was generated from ${chatMessages.length} team chat messages between ${startDate.toLocaleDateString()} and ${now.toLocaleDateString()}.*`;
+
+          // Log the summary as a private chat message
+          const conversationId = await logChatMessage(
+            `Please provide a summary of our team chat activity from the last ${period.toLowerCase()}.`,
+            true, // isUser
+            undefined, // Let it create a new conversation
+            0, // No response time for user messages
+            {}, // No tokens used
+            undefined, // No model used for user messages
+            { 
+              summary_request: true,
+              period: period,
+              message_count: chatMessages.length
+            },
+            false, // visualization
+            'private', // mode
+            [], // mentions
+            undefined, // astraPrompt
+            undefined // visualizationData
+          );
+
+          // Log Astra's summary response
+          await logChatMessage(
+            summaryMessage,
+            false, // isUser (Astra response)
+            conversationId || undefined, // Use the same conversation
+            0, // No response time for pre-generated content
+            {}, // No tokens used
+            'gemini-2.5-flash', // Model used
+            { 
+              summary_response: true,
+              period: period,
+              message_count: chatMessages.length,
+              generated_from: 'team_chat'
+            },
+            false, // visualization
+            'private', // mode
+            [], // mentions
+            `Please provide a summary of our team chat activity from the last ${period.toLowerCase()}.`, // astraPrompt
+            undefined // visualizationData
+          );
+
+          // Switch to the private chat with the summary
+          if (conversationId) {
+            onSwitchToPrivateChat(conversationId);
+          }
+          
+          console.log('✅ Summary created in private chat conversation:', conversationId);
+        } catch (error) {
+          console.error('❌ Error creating private chat summary:', error);
+          // Fallback to showing in sidebar
+          setSummaryResult(finalSummary);
+        }
+      } else {
+        // Fallback to showing in sidebar if no switch function provided
+        setSummaryResult(finalSummary);
+      }
     } catch (error) {
       console.error('❌ Error getting chat summary:', error);
       console.error('❌ Error details:', error.message, error.stack);
