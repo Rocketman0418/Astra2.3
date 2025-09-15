@@ -315,9 +315,13 @@ export const useChat = () => {
           undefined // visualizationData
         );
         
-        // Store the chat ID in the message for later visualization tracking
+        // Update the message in state with the database chatId
         if (chatId) {
-          astraMessage.chatId = chatId;
+          setMessages(prev => prev.map(msg => 
+            msg.id === astraMessage.id 
+              ? { ...msg, chatId: chatId }
+              : msg
+          ));
         }
       } catch (error) {
         console.error('Failed to log chat message:', error);
