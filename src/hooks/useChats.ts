@@ -20,6 +20,7 @@ export interface ChatMessage {
   isUser: boolean;
   createdAt: string;
   visualization?: boolean;
+  visualizationData?: string | null;
 }
 
 export const useChats = () => {
@@ -260,6 +261,7 @@ export const useChats = () => {
         isUser: chat.message_type === 'user',
         createdAt: chat.created_at,
         visualization: chat.visualization || false,
+        visualizationData: chat.visualization_data || null,
       }));
 
       setCurrentMessages(messages);
