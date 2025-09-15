@@ -87,6 +87,12 @@ export const useChat = () => {
             hasStoredVisualization: !!dbMessage.visualizationData,
             visualization_data: dbMessage.visualizationData
           });
+          
+          console.log('🔍 useChat: Added Astra message with visualization data:', {
+            chatId: dbMessage.id,
+            hasVisualizationData: !!dbMessage.visualizationData,
+            visualizationDataLength: dbMessage.visualizationData?.length || 0
+          });
         }
       });
       

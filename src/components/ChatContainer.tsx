@@ -73,15 +73,22 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({
     const localState = visualizationStates[messageId];
     console.log('🔍 ChatContainer: Getting visualization state for messageId:', messageId, 'localState:', localState);
     
+    // Find the message to check for stored visualization
+    const message = messages.find(m => m.chatId === messageId || m.id === messageId);
+    console.log('🔍 ChatContainer: Found message for messageId:', messageId, 'message:', message);
+    console.log('🔍 ChatContainer: Message visualization_data exists:', !!message?.visualization_data);
+    console.log('🔍 ChatContainer: Message visualization flag:', message?.visualization);
+    console.log('🔍 ChatContainer: Message hasStoredVisualization:', message?.hasStoredVisualization);
+    
     // If we have local state, use it
     if (localState) {
+      console.log('🔍 ChatContainer: Using local state for messageId:', messageId);
       return localState;
     }
     
-    // Check if the message has stored visualization in database - SAME AS TEAM CHAT
-    const message = messages.find(m => m.chatId === messageId);
+    // Check if the message has stored visualization in database - EXACTLY LIKE TEAM CHAT
     if (message?.visualization_data) {
-      console.log('🔍 ChatContainer: Message has stored visualization_data, returning database state');
+      console.log('🔍 ChatContainer: Message has stored visualization_data, returning database state for messageId:', messageId);
       return {
         isGenerating: false,
         content: message.visualization_data,
@@ -89,8 +96,9 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({
       };
     }
     
+    console.log('🔍 ChatContainer: No visualization state found for messageId:', messageId);
     return null;
-  }, [visualizationStates]);
+  }, [visualizationStates, messages]);
 
   // Register service worker for PWA
   // Handle conversation loading from sidebar
