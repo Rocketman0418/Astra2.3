@@ -612,6 +612,8 @@ Format the summary in a clear, organized way that helps ${userName} quickly unde
                     <GroupMessage
                       message={message}
                       currentUserId={user?.id || ''}
+                      currentUserEmail={user?.email || ''}
+                      currentUserEmail={user?.email || ''}
                       onViewVisualization={handleViewVisualization}
                       onCreateVisualization={handleCreateVisualization}
                       visualizationState={getVisualizationState(message.id)}

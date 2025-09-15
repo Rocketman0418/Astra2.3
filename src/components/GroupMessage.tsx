@@ -5,6 +5,7 @@ import { GroupMessage as GroupMessageType } from '../types';
 interface GroupMessageProps {
   message: GroupMessageType;
   currentUserId: string;
+  currentUserEmail: string;
   onViewVisualization?: (messageId: string, visualizationData: string) => void;
   onCreateVisualization?: (messageId: string, messageContent: string) => void;
   visualizationState?: any;
@@ -122,6 +123,7 @@ const formatTime = (timestamp: string): string => {
 export const GroupMessage: React.FC<GroupMessageProps> = ({
   message,
   currentUserId,
+  currentUserEmail,
   onViewVisualization,
   onCreateVisualization,
   visualizationState
@@ -130,6 +132,12 @@ export const GroupMessage: React.FC<GroupMessageProps> = ({
   const isAstraMessage = message.message_type === 'astra';
   const hasVisualization = message.visualization_data || visualizationState?.hasVisualization;
   const isGeneratingVisualization = visualizationState?.isGenerating || false;
+  
+  // Check if current user is the one who originally asked the question to Astra
+  const canCreateVisualization = isAstraMessage && (
+    message.metadata?.asked_by_user_name === currentUserEmail?.split('@')[0] ||
+    message.user_email === currentUserEmail
+  );
   
   // Message expansion logic
   const [isExpanded, setIsExpanded] = React.useState(false);
@@ -164,7 +172,7 @@ export const GroupMessage: React.FC<GroupMessageProps> = ({
       onViewVisualization(message.id, message.visualization_data || undefined);
     } else if (visualizationState?.hasVisualization && onViewVisualization) {
       onViewVisualization(message.id, undefined);
-    } else if (isAstraMessage && onCreateVisualization) {
+    } else if (isAstraMessage && onCreateVisualization && canCreateVisualization) {
       onCreateVisualization(message.id, message.message_content);
     }
   };
@@ -236,17 +244,19 @@ export const GroupMessage: React.FC<GroupMessageProps> = ({
           )}
 
           {/* Visualization button for Astra messages */}
-          {isAstraMessage && (onViewVisualization || onCreateVisualization) && (
+          {isAstraMessage && (onViewVisualization || (onCreateVisualization && canCreateVisualization)) && (
             <div className="mt-3">
               <button
                 onClick={handleVisualizationClick}
-                disabled={isGeneratingVisualization}
+                disabled={isGeneratingVisualization || (!hasVisualization && !visualizationState?.hasVisualization && !canCreateVisualization)}
                 className={`flex items-center space-x-2 text-white px-3 py-2 rounded-lg text-xs font-medium transition-all duration-200 transform disabled:cursor-not-allowed ${
                   isGeneratingVisualization
                     ? 'bg-gradient-to-r from-purple-500 to-purple-600 animate-pulse cursor-not-allowed'
                     : (hasVisualization || visualizationState?.hasVisualization)
                     ? 'bg-gradient-to-r from-green-500 via-blue-500 to-purple-500 bg-[length:200%_100%] animate-[gradient_3s_ease-in-out_infinite] hover:scale-105 shadow-lg'
-                    : 'bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 hover:scale-105'
+                    : canCreateVisualization
+                    ? 'bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 hover:scale-105'
+                    : 'bg-gray-600 cursor-not-allowed opacity-50'
                 }`}
               >
                 {(hasVisualization || visualizationState?.hasVisualization) && !isGeneratingVisualization ? (
@@ -265,7 +275,7 @@ export const GroupMessage: React.FC<GroupMessageProps> = ({
               </button>
               
               {/* Retry button - only show when visualization exists */}
-              {(hasVisualization || visualizationState?.hasVisualization) && !isGeneratingVisualization && onCreateVisualization && (
+              {(hasVisualization || visualizationState?.hasVisualization) && !isGeneratingVisualization && onCreateVisualization && canCreateVisualization && (
                 <button
                   onClick={() => onCreateVisualization(message.id, message.message_content)}
                   className="flex items-center space-x-1 bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 text-white px-2 py-2 rounded-lg text-xs font-medium transition-all duration-200 transform hover:scale-105"
