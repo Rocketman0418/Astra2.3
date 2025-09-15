@@ -9,7 +9,7 @@ interface ChatModeToggleProps {
 
 export const ChatModeToggle: React.FC<ChatModeToggleProps> = ({ mode, onModeChange }) => {
   return (
-    <div className="flex bg-gray-800 rounded-lg p-1 mx-4 mb-4">
+    <div className="flex bg-gray-800 rounded-lg p-1 mx-4 my-2">
       <button
         onClick={() => onModeChange('private')}
         className={`flex items-center space-x-2 px-4 py-2 rounded-md transition-all duration-200 flex-1 justify-center ${
