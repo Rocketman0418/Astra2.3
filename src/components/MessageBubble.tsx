@@ -88,7 +88,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
   onCreateVisualization,
   onViewVisualization,
   visualizationState
-  onReply
+ onReply
 }) => {
   const isLongMessage = message.text.length > 300;
   const shouldTruncate = isLongMessage && !message.isExpanded;
