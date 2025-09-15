@@ -175,9 +175,20 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({
   const handleViewVisualization = useCallback((messageId: string) => {
     console.log('👁️ Private chat: Viewing visualization for chatId:', messageId);
     
+    // First check local state for the visualization content
+    const localState = visualizationStates[messageId];
+    console.log('👁️ Private chat: Local state for messageId:', messageId, localState);
+    
+    if (localState?.content && localState.content !== 'generated') {
+      console.log('📊 Private chat: Using local state visualization data');
+      showVisualization(messageId);
+      return;
+    }
+    
     // Find the message object
     const message = messages.find(m => m.chatId === messageId || m.id === messageId);
     console.log('👁️ Private chat: Found message for viewing:', message);
+    console.log('👁️ Private chat: Message visualization_data length:', message?.visualization_data?.length || 0);
     
     // Check if we have visualization data directly in the message
     if (message?.visualization_data) {
@@ -196,22 +207,15 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({
     
     // Check hook state for visualization content
     const hookVisualization = getHookVisualization(messageId);
+    console.log('👁️ Private chat: Hook visualization:', hookVisualization);
     if (hookVisualization?.content) {
       console.log('📊 Private chat: Using hook visualization data');
       showVisualization(messageId);
       return;
     }
     
-    // Check local state for visualization content
-    const localState = visualizationStates[messageId];
-    if (localState?.content && localState.content !== 'generated') {
-      console.log('📊 Private chat: Using local state visualization data');
-      showVisualization(messageId);
-      return;
-    }
-    
     console.log('❌ Private chat: No visualization data found for message:', messageId);
-  }, [showVisualization, getHookVisualization, messages, updateVisualizationState]);
+  }, [showVisualization, getHookVisualization, messages, updateVisualizationState, visualizationStates]);
 
   useEffect(() => {
     // Initial scroll to bottom on component mount
