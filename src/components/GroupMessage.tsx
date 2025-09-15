@@ -253,20 +253,29 @@ export const GroupMessage: React.FC<GroupMessageProps> = ({
                 {mediaItems.map((media, index) => (
                   <div key={index} className="rounded-lg overflow-hidden bg-gray-600/20 border border-gray-600/30">
                     {media.type === 'image' && media.preview ? (
-                      <div className="relative group cursor-pointer" onClick={() => window.open(media.preview, '_blank')}>
+                      <div className="relative group cursor-pointer">
                         <img
                           src={media.preview}
                           alt={media.name}
                           className="w-full max-w-sm h-auto max-h-48 object-cover rounded-lg hover:opacity-90 transition-opacity"
+                          onClick={() => window.open(media.preview, '_blank')}
+                          onError={(e) => {
+                            console.error('Image failed to load:', media.preview);
+                            // Fallback to filename display
+                            const target = e.target as HTMLImageElement;
+                            target.style.display = 'none';
+                            const fallback = target.nextElementSibling as HTMLElement;
+                            if (fallback) fallback.style.display = 'block';
+                          }}
                         />
+                        <div className="hidden p-3 text-center bg-gray-700 rounded-lg">
+                          <div className="text-2xl mb-2">🖼️</div>
+                          <div className="text-sm text-white">{media.name}</div>
+                          <div className="text-xs text-gray-400 mt-1">Image failed to load</div>
+                        </div>
                         <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors rounded-lg flex items-center justify-center">
                           <div className="opacity-0 group-hover:opacity-100 transition-opacity bg-black/70 text-white px-3 py-2 rounded-lg text-sm font-medium">
                             Click to view full size
-                          </div>
-                        </div>
-                        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-2">
-                          <div className="text-white text-xs font-medium truncate">
-                            {media.name}
                           </div>
                         </div>
                       </div>
@@ -353,7 +362,7 @@ export const GroupMessage: React.FC<GroupMessageProps> = ({
                   className="flex items-center space-x-1 bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 text-white px-2 py-2 rounded-lg text-xs font-medium transition-all duration-200 transform hover:scale-105"
                   title="Generate a new visualization"
                 >
-                <div className="whitespace-pre-wrap text-white">{finalText}</div>
+                  <RefreshCw className="w-3 h-3" />
                   <span className="hidden sm:inline">Retry</span>
                 </button>
               )}

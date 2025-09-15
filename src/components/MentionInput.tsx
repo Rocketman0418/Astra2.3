@@ -320,7 +320,11 @@ export const MentionInput: React.FC<MentionInputProps> = ({
       return;
     }
 
-    console.log('Sending message with:', { text: value.trim(), mediaCount: attachedMedia.length });
+    console.log('Sending message with:', { 
+      text: value.trim(), 
+      mediaCount: attachedMedia.length,
+      mediaDetails: attachedMedia.map(m => ({ name: m.file.name, preview: m.preview }))
+    });
     
     // Always send together - both text and media info
     const mediaInfo = attachedMedia.map(media => ({
@@ -333,10 +337,15 @@ export const MentionInput: React.FC<MentionInputProps> = ({
     // Send the message with media info
     onSend(value.trim(), mediaInfo);
     
-    // Clear everything after sending
+    // Clear text but keep media URLs alive briefly for the message to use them
     onChange('');
-    attachedMedia.forEach(media => URL.revokeObjectURL(media.preview));
-    setAttachedMedia([]);
+    
+    // Clear media after a short delay to allow the message to render
+    setTimeout(() => {
+      attachedMedia.forEach(media => URL.revokeObjectURL(media.preview));
+      setAttachedMedia([]);
+    }, 1000);
+    
     setShowEmojiPicker(false);
   };
 
