@@ -124,6 +124,7 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({
       // Fetch visualization data from database
       const fetchVisualization = async () => {
         try {
+          const { supabase } = await import('../lib/supabase');
           const { data, error } = await supabase
             .from('astra_chats')
             .select('visualization_data')
