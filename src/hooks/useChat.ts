@@ -43,8 +43,6 @@ export const useChat = () => {
           return;
         }
 
-        console.log('✅ Received Astra response:', { messageText: messageText.substring(0, 100) + '...' });
-
         setUserProfile(data);
       } catch (err) {
         console.error('Error in fetchUserProfile:', err);
@@ -71,13 +69,10 @@ export const useChat = () => {
         if (dbMessage.isUser) {
           // Add user message
           uiMessages.push({
-        
-        console.log('✅ Added Astra message to UI, current message count:', messages.length + 1);
             id: `${dbMessage.id}-user`,
             text: dbMessage.message,
             isUser: true,
             timestamp: new Date(dbMessage.createdAt),
-          const userChatId = await logChatMessage(
           });
         } else {
           // Add Astra response
@@ -91,8 +86,6 @@ export const useChat = () => {
             hasStoredVisualization: !!dbMessage.visualizationData,
             visualization_data: dbMessage.visualizationData
           });
-          
-          console.log('✅ Logged user message to database:', userChatId);
           
           console.log('🔍 useChat: Added Astra message with visualization data:', {
             chatId: dbMessage.id,
@@ -286,6 +279,8 @@ export const useChat = () => {
         messageText = responseText;
       }
 
+      console.log('✅ Received Astra response:', { messageText: messageText.substring(0, 100) + '...' });
+
       const astraMessage: Message = {
         id: `${messageId}-astra`,
         text: messageText,
@@ -296,10 +291,12 @@ export const useChat = () => {
       // Add Astra response to UI immediately
       setMessages(prev => [...prev, astraMessage]);
 
+      console.log('✅ Added Astra message to UI, current message count:', messages.length + 1);
+
       // Log the chat message to database
       try {
         // Log user message
-        await logChatMessage(
+        const userChatId = await logChatMessage(
           text.trim(),
           true, // isUser
           currentConversationId || undefined,
@@ -313,6 +310,8 @@ export const useChat = () => {
           undefined, // astraPrompt
           undefined // visualizationData
         );
+        
+        console.log('✅ Logged user message to database:', userChatId);
         
         // Log Astra response
         const chatId = await logChatMessage(
@@ -331,20 +330,20 @@ export const useChat = () => {
           false, // visualization
           'private', // mode
           [], // mentions
-          console.log('✅ Logged Astra response to database:', chatId);
-          
           text.trim(), // astraPrompt (original user question)
           undefined // visualizationData
         );
         
+        console.log('✅ Logged Astra response to database:', chatId);
+        
         // Update the message in state with the database chatId
         if (chatId) {
           setMessages(prev => prev.map(msg => 
-            console.log('✅ Updated Astra message with chatId:', chatId);
             msg.id === astraMessage.id 
               ? { ...msg, chatId: chatId }
               : msg
           ));
+          console.log('✅ Updated Astra message with chatId:', chatId);
         }
       } catch (error) {
         console.error('Failed to log chat message:', error);
