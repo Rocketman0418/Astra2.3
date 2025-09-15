@@ -176,7 +176,7 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({
     const message = messages.find(m => m.chatId === actualChatId);
     
     // First check if we have visualization data in the database
-    if (message?.visualization) {
+    if (message?.hasStoredVisualization) {
       console.log('📊 Private chat: Message has stored visualization, fetching from database');
       // Fetch visualization data from database
       const fetchVisualization = async () => {
