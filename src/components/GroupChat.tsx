@@ -43,6 +43,27 @@ export const GroupChat: React.FC<GroupChatProps> = ({ showSearch = false, showMe
   const [isSummarizing, setIsSummarizing] = useState(false);
   const [summaryResult, setSummaryResult] = useState<string | null>(null);
 
+  // Get user's display name
+  const getUserName = useCallback(async (): Promise<string> => {
+    if (!user) return 'Unknown User';
+
+    try {
+      const { data, error } = await supabase
+        .from('users')
+        .select('name')
+        .eq('id', user.id)
+        .single();
+
+      if (error || !data?.name) {
+        return user.email?.split('@')[0] || 'Unknown User';
+      }
+
+      return data.name;
+    } catch (err) {
+      return user.email?.split('@')[0] || 'Unknown User';
+    }
+  }, [user]);
+
   const {
     messages,
     loading,
@@ -182,27 +203,6 @@ Format the summary in a clear, organized way that helps ${userName} quickly unde
       setIsSummarizing(false);
     }
   }, [user, getUserName]);
-
-  // Get user's display name
-  const getUserName = useCallback(async (): Promise<string> => {
-    if (!user) return 'Unknown User';
-
-    try {
-      const { data, error } = await supabase
-        .from('users')
-        .select('name')
-        .eq('id', user.id)
-        .single();
-
-      if (error || !data?.name) {
-        return user.email?.split('@')[0] || 'Unknown User';
-      }
-
-      return data.name;
-    } catch (err) {
-      return user.email?.split('@')[0] || 'Unknown User';
-    }
-  }, [user]);
 
   // Fetch users for mentions
   useEffect(() => {
