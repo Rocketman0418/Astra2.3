@@ -60,11 +60,21 @@ export const MentionInput: React.FC<MentionInputProps> = ({
         const uploadPromises = selectedFiles.map(file => uploadFile(file));
         const uploadResults = await Promise.all(uploadPromises);
         
-        // Add file references to message content
-        const fileReferences = uploadResults.map(result => {
-          const emoji = result.file.type.startsWith('image/') ? '🖼️' : 
-                       result.file.type.startsWith('video/') ? '🎥' : '📄';
-          return `[${emoji} ${result.file.name}|||${result.url}]`;
+        // Check for upload errors
+        const failedUploads = uploadResults.filter(result => result.error);
+        if (failedUploads.length > 0) {
+          console.error('Some uploads failed:', failedUploads);
+          alert(`Failed to upload ${failedUploads.length} file(s). Please try again.`);
+          setIsUploading(false);
+          return;
+        }
+        
+        // Add file references to message content with Supabase URLs
+        const fileReferences = uploadResults.map((result, index) => {
+          const file = selectedFiles[index];
+          const emoji = file.type.startsWith('image/') ? '🖼️' : 
+                       file.type.startsWith('video/') ? '🎥' : '📄';
+          return `[${emoji} ${file.name}|||${result.url}]`;
         }).join(' ');
         
         messageContent = fileReferences + (value.trim() ? '\n' + value : '');
@@ -122,25 +132,6 @@ export const MentionInput: React.FC<MentionInputProps> = ({
       )}
 
       <div className="flex items-end space-x-3">
-        {/* File attachment button */}
-        <button
-          onClick={() => fileInputRef.current?.click()}
-          disabled={disabled || isUploading}
-          className="flex-shrink-0 p-2 text-gray-400 hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          <Paperclip className="w-5 h-5" />
-        </button>
-
-        {/* Hidden file input */}
-        <input
-          ref={fileInputRef}
-          type="file"
-          multiple
-          accept="image/*,video/*,.pdf,.doc,.docx,.txt"
-          onChange={handleFileSelect}
-          className="hidden"
-        />
-
         {/* Message input */}
         <div className="flex-1">
           <textarea
@@ -155,6 +146,33 @@ export const MentionInput: React.FC<MentionInputProps> = ({
             style={{ maxHeight: '120px' }}
           />
         </div>
+
+        {/* File attachment button */}
+        <button
+          onClick={() => fileInputRef.current?.click()}
+          disabled={disabled || isUploading}
+          className="flex-shrink-0 p-2 text-gray-400 hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          <Paperclip className="w-5 h-5" />
+        </button>
+
+        {/* Emoji button placeholder */}
+        <button
+          disabled={disabled || isUploading}
+          className="flex-shrink-0 p-2 text-gray-400 hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          <span className="text-xl">😊</span>
+        </button>
+
+        {/* Hidden file input */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          multiple
+          accept="image/*,video/*,.pdf,.doc,.docx,.txt"
+          onChange={handleFileSelect}
+          className="hidden"
+        />
 
         {/* Send button */}
         <button

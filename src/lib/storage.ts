@@ -44,13 +44,15 @@ export const uploadFile = async (file: File, bucket: string = 'chat-media'): Pro
 
     return {
       url: urlData.publicUrl,
-      path: filePath
+      path: filePath,
+      file: file
     };
   } catch (err) {
     console.error('❌ Upload exception:', err);
     return { 
       url: '', 
       path: '', 
+      file: file,
       error: err instanceof Error ? err.message : 'Unknown upload error' 
     };
   }

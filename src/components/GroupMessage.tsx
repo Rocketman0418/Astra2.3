@@ -260,18 +260,31 @@ export const GroupMessage: React.FC<GroupMessageProps> = ({
                           className="w-full max-w-sm h-auto max-h-48 object-cover rounded-lg hover:opacity-90 transition-opacity"
                           onClick={() => window.open(media.preview, '_blank')}
                           onError={(e) => {
-                            console.error('Image failed to load:', media.preview);
+                            console.error('❌ Image failed to load:', media.preview);
+                            console.log('🔍 Attempting to load image from URL:', media.preview);
                             // Fallback to filename display
                             const target = e.target as HTMLImageElement;
                             target.style.display = 'none';
                             const fallback = target.nextElementSibling as HTMLElement;
                             if (fallback) fallback.style.display = 'block';
                           }}
+                          onLoad={() => {
+                            console.log('✅ Image loaded successfully:', media.preview);
+                          }}
                         />
                         <div className="hidden p-3 text-center bg-gray-700 rounded-lg">
                           <div className="text-2xl mb-2">🖼️</div>
                           <div className="text-sm text-white">{media.name}</div>
-                          <div className="text-xs text-gray-400 mt-1">Image failed to load</div>
+                          <div className="text-xs text-gray-400 mt-1">
+                            Image failed to load
+                            <br />
+                            <button 
+                              onClick={() => window.open(media.preview, '_blank')}
+                              className="text-blue-300 hover:text-blue-200 underline mt-1"
+                            >
+                              Try opening directly
+                            </button>
+                          </div>
                         </div>
                         <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors rounded-lg flex items-center justify-center">
                           <div className="opacity-0 group-hover:opacity-100 transition-opacity bg-black/70 text-white px-3 py-2 rounded-lg text-sm font-medium">
