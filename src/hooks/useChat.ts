@@ -219,8 +219,7 @@ export const useChat = () => {
         console.error('❌ Webhook request failed:', {
           status: response.status,
           statusText: response.statusText,
-          visualization: dbMessage.visualization || false,
-          hasStoredVisualization: !!(dbMessage.visualizationData || dbMessage.visualization)
+          errorText: errorText
         });
         
         // Try to parse error response and extract meaningful message
