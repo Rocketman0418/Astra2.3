@@ -197,22 +197,22 @@ Please organize your response into exactly 3 sections with a target of ${
   period === '24 Hours' ? '200 words' : 
   period === '7 Days' ? '300 words' : 
   '500 words'
-} total:
+} total. Use bullet points within each section for easy scanning:
 
 **Activity:**
-- Who posted messages and how frequently
-- Posting patterns and engagement levels
-- Most active participants during this period
+• Who posted messages and how frequently
+• Posting patterns and engagement levels  
+• Most active participants during this period
 
 **Content:**
-- General topics and subjects discussed by users
-- Questions asked by users that Astra responded to (mention who asked what, but do NOT include Astra's actual response content)
-- Types of content shared (images, links, etc.)
+• General topics and subjects discussed by users
+• Questions asked by users that Astra responded to (mention who asked what, but do NOT include Astra's actual response content)
+• Types of content shared (images, links, etc.)
 
 **Insights:**
-- Overall team communication patterns
-- Notable trends in the conversations
-- Key observations about team collaboration during this period
+• Overall team communication patterns
+• Notable trends in the conversations
+• Key observations about team collaboration during this period
 
 IMPORTANT: When mentioning Astra responses, only note who asked what question and that Astra responded - do NOT include any of Astra's actual message content as this can be confusing.
 
