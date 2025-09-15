@@ -14,6 +14,13 @@ export const MainContainer: React.FC = () => {
   const [showSearch, setShowSearch] = useState(false);
   const [showMembers, setShowMembers] = useState(false);
 
+  // Close sidebar when switching to private chat mode
+  React.useEffect(() => {
+    if (chatMode === 'private') {
+      setSidebarOpen(false);
+    }
+  }, [chatMode]);
+
   const handleLoadConversation = (conversationId: string) => {
     setConversationToLoad(conversationId);
     setSidebarOpen(false);
