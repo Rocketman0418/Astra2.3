@@ -1,632 +1,378 @@
-import React, { useState, useRef, useEffect, KeyboardEvent } from 'react';
-import { Send, Smile, X, Image, Video, FileText, Camera } from 'lucide-react';
-import { uploadFile } from '../lib/storage';
+import React from 'react';
+import { BarChart3, Check, RefreshCw } from 'lucide-react';
+import { GroupMessage as GroupMessageType } from '../types';
 
-interface User {
-  id: string;
-  name: string;
-  email: string;
+interface GroupMessageProps {
+  message: GroupMessageType;
+  currentUserId: string;
+  onViewVisualization?: (messageId: string, visualizationData: string) => void;
+  onCreateVisualization?: (messageId: string, messageContent: string) => void;
+  visualizationState?: any;
 }
 
-interface MentionInputProps {
-  value: string;
-  onChange: (value: string) => void;
-  onSend: (message: string, mediaInfo?: Array<{name: string, size: number, type: string, preview: string}>) => void;
-  disabled: boolean;
-  placeholder?: string;
-  users?: User[];
-  onMediaUpload?: (file: File) => void;
-}
-
-interface MediaFile {
-  file: File;
-  preview: string;
-  type: 'image' | 'video' | 'pdf';
-}
-export const MentionInput: React.FC<MentionInputProps> = ({
-  value,
-  onChange,
-  onSend,
-  disabled,
-  placeholder = "Type a message... Use @astra for AI Intelligence",
-  users = [],
-  onMediaUpload
-}) => {
-  const [showMentions, setShowMentions] = useState(false);
-  const [mentionQuery, setMentionQuery] = useState('');
-  const [selectedMentionIndex, setSelectedMentionIndex] = useState(0);
-  const [cursorPosition, setCursorPosition] = useState(0);
-  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
-  const [attachedMedia, setAttachedMedia] = useState<MediaFile[]>([]);
-  const [showMediaMenu, setShowMediaMenu] = useState(false);
-  const [uploadingFiles, setUploadingFiles] = useState<Set<string>>(new Set());
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const mentionsRef = useRef<HTMLDivElement>(null);
-  const emojiPickerRef = useRef<HTMLDivElement>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const mediaMenuRef = useRef<HTMLDivElement>(null);
-
-  // Add Astra to the users list
-  const allUsers = [
-    { id: 'astra', name: 'Astra', email: 'astra@rockethub.ai' },
-    ...users
-  ];
-
-  // Filter users based on mention query
-  const filteredUsers = allUsers.filter(user =>
-    user.name.toLowerCase().includes(mentionQuery.toLowerCase()) ||
-    user.email.toLowerCase().includes(mentionQuery.toLowerCase())
-  );
-
-  // Handle input changes
-  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const newValue = e.target.value;
-    const cursorPos = e.target.selectionStart || 0;
+// Helper function to extract media info from message content
+const extractMediaInfo = (content: string) => {
+  const mediaRegex = /\[(🖼️|🎥|📄)\s+([^\]]+)\]/g;
+  const mediaItems: Array<{type: string, name: string, emoji: string, preview?: string}> = [];
+  let match;
+  
+  while ((match = mediaRegex.exec(content)) !== null) {
+    const emoji = match[1];
+    const name = match[2];
+    const type = emoji === '🖼️' ? 'image' : emoji === '🎥' ? 'video' : 'pdf';
     
-    onChange(newValue);
-    setCursorPosition(cursorPos);
-
-    // Check for @ mentions
-    const textBeforeCursor = newValue.substring(0, cursorPos);
-    const mentionMatch = textBeforeCursor.match(/@(\w*)$/);
+    // Extract preview URL if it exists (format: filename|||previewUrl)
+    const parts = name.split('|||');
+    const fileName = parts[0];
+    const previewUrl = parts[1];
     
-    if (mentionMatch) {
-      setMentionQuery(mentionMatch[1]);
-      setShowMentions(true);
-      setSelectedMentionIndex(0);
-    } else {
-      setShowMentions(false);
-      setMentionQuery('');
-    }
+    mediaItems.push({ type, name: fileName, emoji, preview: previewUrl });
+  }
+  
+  return {
+    mediaItems,
+    textContent: content.replace(mediaRegex, '').trim()
   };
+};
 
-  // Handle key presses
-  const handleKeyPress = (e: KeyboardEvent<HTMLTextAreaElement>) => {
-    if (showMentions) {
-      if (e.key === 'ArrowDown') {
-        e.preventDefault();
-        setSelectedMentionIndex(prev => 
-          prev < filteredUsers.length - 1 ? prev + 1 : 0
-        );
-      } else if (e.key === 'ArrowUp') {
-        e.preventDefault();
-        setSelectedMentionIndex(prev => 
-          prev > 0 ? prev - 1 : filteredUsers.length - 1
-        );
-      } else if (e.key === 'Enter' || e.key === 'Tab') {
-        e.preventDefault();
-        if (filteredUsers[selectedMentionIndex]) {
-          insertMention(filteredUsers[selectedMentionIndex]);
-        }
-      } else if (e.key === 'Escape') {
-        setShowMentions(false);
-      }
-    } else if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSubmit();
-    }
-  };
-
-  // Insert mention into text
-  const insertMention = (user: User) => {
-    const textBeforeCursor = value.substring(0, cursorPosition);
-    const textAfterCursor = value.substring(cursorPosition);
-    const mentionMatch = textBeforeCursor.match(/@(\w*)$/);
+const formatMessageContent = (content: string, mentions: string[], isAstraMessage: boolean = false): JSX.Element => {
+  if (isAstraMessage) {
+    // Use the same formatting logic as private chat for Astra messages
+    const lines = content.split('\n');
+    const elements: JSX.Element[] = [];
     
-    if (mentionMatch) {
-      const beforeMention = textBeforeCursor.substring(0, mentionMatch.index);
-      const newValue = `${beforeMention}@${user.name.toLowerCase()} ${textAfterCursor}`;
-      const newCursorPos = beforeMention.length + user.name.length + 2;
+    lines.forEach((line, index) => {
+      const trimmedLine = line.trim();
       
-      onChange(newValue);
-      setShowMentions(false);
-      
-      // Set cursor position after mention
-      setTimeout(() => {
-        if (textareaRef.current) {
-          textareaRef.current.setSelectionRange(newCursorPos, newCursorPos);
-          textareaRef.current.focus();
-        }
-      }, 0);
-    }
-  };
-
-  // Handle form submission
-  const handleSubmit = () => {
-    if (value.trim() && !disabled) {
-      onSend(value);
-      setShowEmojiPicker(false);
-    }
-  };
-
-  // Common emojis for quick access
-  const commonEmojis = [
-    // Faces & Expressions
-    '😀', '😃', '😄', '😁', '😆', '😅', '🤣', '😂', '🙂', '🙃',
-    '😉', '😊', '😇', '🥰', '😍', '🤩', '😘', '😗', '😚', '😙',
-    '😋', '😛', '😜', '🤪', '😝', '🤑', '🤗', '🤭', '🤫', '🤔',
-    '🤐', '🤨', '😐', '😑', '😶', '😏', '😒', '🙄', '😬', '🤥',
-    '😎', '🤓', '🧐', '😕', '😟', '🙁', '☹️', '😮', '😯', '😲',
-    '😳', '🥺', '😦', '😧', '😨', '😰', '😥', '😢', '😭', '😱',
-    '😖', '😣', '😞', '😓', '😩', '😫', '🥱', '😴', '😪', '😵',
-    
-    // Cool & Fun
-    '😎', '🤠', '🥳', '🤡', '🤖', '👻', '💀', '☠️', '👽', '👾',
-    '🎭', '🎪', '🎨', '🎬', '🎤', '🎧', '🎵', '🎶', '🎸', '🥁',
-    
-    // Hands & Gestures
-    '👍', '👎', '👌', '✌️', '🤞', '🤟', '🤘', '🤙', '👈', '👉',
-    '👆', '👇', '☝️', '👋', '🤚', '🖐️', '✋', '🖖', '👏', '🙌',
-    '🤲', '🤝', '🙏', '✍️', '💪', '🦾', '🦿', '🦵', '🦶', '💅',
-    
-    // Hearts & Love
-    '❤️', '🧡', '💛', '💚', '💙', '💜', '🖤', '🤍', '🤎', '💔',
-    '❣️', '💕', '💞', '💓', '💗', '💖', '💘', '💝', '💟', '☮️',
-    
-    // Symbols & Effects
-    '✨', '🎉', '🎊', '🔥', '💯', '⭐', '🌟', '💫', '⚡', '💥',
-    '💢', '💨', '💦', '💤', '🕳️', '💣', '💡', '🔔', '🔕', '📢',
-    
-    // Transportation & Space
-    '🚀', '🛸', '✈️', '🚁', '🚂', '🚗', '🏎️', '🚓', '🚑', '🚒',
-    '🚐', '🛻', '🚚', '🚛', '🚜', '🏍️', '🛵', '🚲', '🛴', '🛹',
-    
-    // Nature & Weather
-    '🌈', '☀️', '🌤️', '⛅', '🌦️', '🌧️', '⛈️', '🌩️', '🌨️', '❄️',
-    '☃️', '⛄', '🌬️', '💨', '🌪️', '🌊', '💧', '☔', '⚡', '🔥',
-    
-    // Food & Drinks
-    '🍕', '🍔', '🌭', '🥪', '🌮', '🌯', '🥙', '🧆', '🥚', '🍳',
-    '🥞', '🧇', '🥓', '🥩', '🍗', '🍖', '🦴', '🌭', '🍟', '🍿',
-    '☕', '🍵', '🧃', '🥤', '🍶', '🍺', '🍻', '🥂', '🍷', '🥃',
-    
-    // Activities & Sports
-    '⚽', '🏀', '🏈', '⚾', '🥎', '🎾', '🏐', '🏉', '🥏', '🎱',
-    '🏓', '🏸', '🏒', '🏑', '🥍', '🏏', '🪃', '🥅', '⛳', '🪁',
-    
-    // Objects & Tools
-    '💻', '🖥️', '🖨️', '⌨️', '🖱️', '🖲️', '💽', '💾', '💿', '📀',
-    '📱', '☎️', '📞', '📟', '📠', '📺', '📻', '🎙️', '🎚️', '🎛️'
-  ];
-
-  // Insert emoji at cursor position
-  const insertEmoji = (emoji: string) => {
-    const textBeforeCursor = value.substring(0, cursorPosition);
-    const textAfterCursor = value.substring(cursorPosition);
-    const newValue = textBeforeCursor + emoji + textAfterCursor;
-    const newCursorPos = cursorPosition + emoji.length;
-    
-    onChange(newValue);
-    setCursorPosition(newCursorPos);
-    
-    // Set cursor position after emoji
-    setTimeout(() => {
-      if (textareaRef.current) {
-        textareaRef.current.setSelectionRange(newCursorPos, newCursorPos);
-        textareaRef.current.focus();
-      }
-    }, 0);
-  };
-
-  // Check if @astra is mentioned (disable emojis for AI queries)
-  const hasAstraMention = value.toLowerCase().includes('@astra');
-
-  // Media upload constants
-  const MAX_IMAGE_SIZE = 10 * 1024 * 1024; // 10MB
-  const MAX_VIDEO_SIZE = 50 * 1024 * 1024; // 50MB
-  const MAX_PDF_SIZE = 25 * 1024 * 1024; // 25MB
-  const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'image/bmp', 'image/tiff'];
-  const ALLOWED_VIDEO_TYPES = ['video/mp4', 'video/webm', 'video/mov', 'video/avi'];
-  const ALLOWED_PDF_TYPES = ['application/pdf'];
-
-  // Handle file selection
-  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = event.target.files;
-    if (!files) return;
-
-    Array.from(files).forEach(file => {
-      const isImage = ALLOWED_IMAGE_TYPES.includes(file.type);
-      const isVideo = ALLOWED_VIDEO_TYPES.includes(file.type);
-      const isPDF = ALLOWED_PDF_TYPES.includes(file.type);
-
-      if (!isImage && !isVideo && !isPDF) {
-        alert('Please select a valid image, video, or PDF file. See supported formats in the upload menu.');
+      // Skip empty lines but add spacing
+      if (!trimmedLine) {
+        elements.push(<br key={`br-${index}`} />);
         return;
       }
-
-      const maxSize = isImage ? MAX_IMAGE_SIZE : isVideo ? MAX_VIDEO_SIZE : MAX_PDF_SIZE;
-      if (file.size > maxSize) {
-        const maxSizeMB = maxSize / (1024 * 1024);
-        const fileType = isImage ? 'images' : isVideo ? 'videos' : 'PDFs';
-        alert(`File size must be less than ${maxSizeMB}MB for ${fileType}.`);
+      
+      // Handle numbered lists (1. 2. 3. etc.)
+      const numberedListMatch = trimmedLine.match(/^(\d+)\.\s*\*\*(.*?)\*\*:\s*(.*)$/);
+      if (numberedListMatch) {
+        const [, number, title, content] = numberedListMatch;
+        elements.push(
+          <div key={index} className="mb-4">
+            <div className="flex items-start space-x-2">
+              <span className="flex-shrink-0 w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-sm font-bold">
+                {number}
+              </span>
+              <div className="flex-1">
+                <div className="font-bold text-blue-300 mb-1">{title}</div>
+                <div className="text-gray-300 leading-relaxed">{content}</div>
+              </div>
+            </div>
+          </div>
+        );
         return;
       }
-
-      // Create preview URL
-      const preview = URL.createObjectURL(file);
-      const mediaFile: MediaFile = {
-        file,
-        preview,
-        type: isImage ? 'image' : isVideo ? 'video' : 'pdf'
-      };
-
-      setAttachedMedia(prev => [...prev, mediaFile]);
-    });
-
-    // Reset file input
-    event.target.value = '';
-    setShowMediaMenu(false);
-  };
-
-  // Remove attached media
-  const removeMedia = (index: number) => {
-    setAttachedMedia(prev => {
-      const newMedia = [...prev];
-      URL.revokeObjectURL(newMedia[index].preview);
-      newMedia.splice(index, 1);
-      return newMedia;
-    });
-  };
-
-  // Handle media upload
-  const handleMediaUpload = () => {
-    if (fileInputRef.current) {
-      fileInputRef.current.click();
-    }
-  };
-
-  // Auto-resize textarea
-  useEffect(() => {
-    if (textareaRef.current) {
-      textareaRef.current.style.height = 'auto';
-      textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
-    }
-  }, [value]);
-
-  // Close mentions dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (mentionsRef.current && !mentionsRef.current.contains(event.target as Node)) {
-        setShowMentions(false);
+      
+      // Handle regular bold text
+      const boldRegex = /\*\*(.*?)\*\*/g;
+      if (boldRegex.test(trimmedLine)) {
+        const parts = trimmedLine.split(boldRegex);
+        const formattedParts = parts.map((part, partIndex) => {
+          if (partIndex % 2 === 1) {
+            return <strong key={partIndex} className="font-bold text-blue-300">{part}</strong>;
+          }
+          return part;
+        });
+        elements.push(<div key={index} className="mb-2">{formattedParts}</div>);
+        return;
       }
-      if (emojiPickerRef.current && !emojiPickerRef.current.contains(event.target as Node)) {
-        // Only close emoji picker if clicking outside AND not on the emoji button
-        const target = event.target as Element;
-        const isEmojiButton = target.closest('button')?.querySelector('svg')?.classList.contains('lucide-smile');
-        if (!isEmojiButton) {
-          setShowEmojiPicker(false);
-        }
-      }
-      if (mediaMenuRef.current && !mediaMenuRef.current.contains(event.target as Node)) {
-        // Only close media menu if clicking outside AND not on the media button
-        const target = event.target as Element;
-        const isMediaButton = target.closest('button')?.querySelector('svg')?.classList.contains('lucide-paperclip');
-        if (!isMediaButton) {
-          setShowMediaMenu(false);
-        }
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  // Handle form submission with media
-  const handleSubmitWithMedia = () => {
-    if (disabled) {
-      return;
-    }
-
-    // Don't send if both text and media are empty, or if files are still uploading
-    if ((!value.trim() && attachedMedia.length === 0) || uploadingFiles.size > 0) {
-      return;
-    }
-
-    // Upload files to Supabase Storage first
-    const uploadAndSend = async () => {
-      try {
-        console.log('📤 Starting file uploads for:', attachedMedia.length, 'files');
-        
-        const mediaInfo = await Promise.all(
-          attachedMedia.map(async (media) => {
-            const fileId = `${media.file.name}-${Date.now()}`;
-            setUploadingFiles(prev => new Set([...prev, fileId]));
-            
-            try {
-              console.log('⬆️ Uploading file:', media.file.name);
-              const uploadResult = await uploadFile(media.file);
-              
-              if (uploadResult.error) {
-                console.error('❌ Upload failed for:', media.file.name, uploadResult.error);
-                throw new Error(uploadResult.error);
-              }
-              
-              console.log('✅ Upload successful for:', media.file.name, uploadResult.url);
-              
-              return {
-                name: media.file.name,
-                size: media.file.size,
-                type: media.type,
-                preview: uploadResult.url, // Use permanent Supabase URL
-                supabasePath: uploadResult.path
-              };
-            } finally {
-              setUploadingFiles(prev => {
-                const newSet = new Set(prev);
-                newSet.delete(fileId);
-                return newSet;
-              });
-            }
-          })
+      
+      // Handle bullet points
+      if (trimmedLine.startsWith('•') || trimmedLine.startsWith('-')) {
+        elements.push(
+          <div key={index} className="flex items-start space-x-2 mb-2 ml-4">
+            <span className="text-blue-400 mt-1">•</span>
+            <span className="text-gray-300">{trimmedLine.substring(1).trim()}</span>
+          </div>
         );
-        
-        console.log('✅ All files uploaded successfully, sending message');
-        
-        // Send the message with permanent URLs
-        onSend(value.trim(), mediaInfo);
-        
-        // Clear form
-        onChange('');
-        attachedMedia.forEach(media => URL.revokeObjectURL(media.preview));
-        setAttachedMedia([]);
-        setShowEmojiPicker(false);
-        
-      } catch (error) {
-        console.error('❌ Error uploading files:', error);
-        alert('Failed to upload files. Please try again.');
+        return;
       }
-    };
+      
+      // Regular text
+      elements.push(<div key={index} className="mb-2 text-gray-300">{trimmedLine}</div>);
+    });
     
-    uploadAndSend();
-  };
+    return <div>{elements}</div>;
+  }
 
-  // Clean up object URLs on unmount
-  useEffect(() => {
-    return () => {
-      attachedMedia.forEach(media => URL.revokeObjectURL(media.preview));
-    };
-  }, []);
+  // Regular user message formatting with mentions
+  if (mentions.length === 0) {
+    return <span className="text-gray-300">{content}</span>;
+  }
+
+  let formattedContent = content;
+  mentions.forEach(mention => {
+    const mentionRegex = new RegExp(`@${mention}`, 'gi');
+    formattedContent = formattedContent.replace(
+      mentionRegex,
+      `<span class="bg-blue-600/20 text-blue-300 px-1 rounded">@${mention}</span>`
+    );
+  });
 
   return (
-    <div className="relative">
-      {/* Hidden file input */}
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept={[...ALLOWED_IMAGE_TYPES, ...ALLOWED_VIDEO_TYPES, ...ALLOWED_PDF_TYPES].join(',')}
-        multiple
-        onChange={handleFileSelect}
-        className="hidden"
-      />
+    <span 
+      className="text-gray-300"
+      dangerouslySetInnerHTML={{ __html: formattedContent }}
+    />
+  );
+};
 
-      {/* Mentions dropdown */}
-      {showMentions && filteredUsers.length > 0 && (
-        <div
-          ref={mentionsRef}
-          className="absolute bottom-full left-0 right-0 mb-2 bg-gray-800 border border-gray-600 rounded-lg shadow-lg max-h-48 overflow-y-auto z-50"
-        >
-          {filteredUsers.map((user, index) => (
-            <button
-              key={user.id}
-              onClick={() => insertMention(user)}
-              className={`w-full text-left px-4 py-3 hover:bg-gray-700 transition-colors flex items-center space-x-3 ${
-                index === selectedMentionIndex ? 'bg-gray-700' : ''
-              }`}
-            >
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
-                user.id === 'astra' 
-                  ? 'bg-gradient-to-br from-blue-600 to-purple-600 text-white'
-                  : 'bg-gray-600 text-white'
-              }`}>
-                {user.id === 'astra' ? '🚀' : user.name.charAt(0).toUpperCase()}
-              </div>
-              <div>
-                <div className="text-white text-sm font-medium">{user.name}</div>
-                <div className="text-gray-400 text-xs">{user.email}</div>
-              </div>
-            </button>
-          ))}
-        </div>
-      )}
+const formatTime = (timestamp: string): string => {
+  const date = new Date(timestamp);
+  const now = new Date();
+  const diffInHours = (now.getTime() - date.getTime()) / (1000 * 60 * 60);
 
-      {/* Media Menu */}
-      {showMediaMenu && (
-        <div
-          ref={mediaMenuRef}
-          className="absolute bottom-full left-0 mb-2 bg-gray-800 border border-gray-600 rounded-lg shadow-lg p-2 z-50 min-w-64"
-        >
-          <div className="px-3 py-2 border-b border-gray-600 mb-2">
-            <h4 className="text-white text-sm font-medium mb-1">Upload Media</h4>
-            <p className="text-gray-400 text-xs">Supported file types:</p>
-          </div>
-          
-          <button
-            onClick={handleMediaUpload}
-            className="flex items-center space-x-3 w-full text-left px-3 py-2 hover:bg-gray-700 rounded-lg transition-colors text-white text-sm mb-1"
-          >
-            <Camera className="w-4 h-4 text-blue-400" />
-            <div className="flex-1">
-              <div className="font-medium">Photos & Screenshots</div>
-              <div className="text-xs text-gray-400">JPEG, PNG, GIF, WebP, BMP, TIFF (Max 10MB)</div>
-            </div>
-          </button>
-          
-          <button
-            onClick={handleMediaUpload}
-            className="flex items-center space-x-3 w-full text-left px-3 py-2 hover:bg-gray-700 rounded-lg transition-colors text-white text-sm mb-1"
-          >
-            <Video className="w-4 h-4 text-purple-400" />
-            <div className="flex-1">
-              <div className="font-medium">Videos</div>
-              <div className="text-xs text-gray-400">MP4, WebM, MOV, AVI (Max 50MB)</div>
-            </div>
-          </button>
-          
-          <button
-            onClick={handleMediaUpload}
-            className="flex items-center space-x-3 w-full text-left px-3 py-2 hover:bg-gray-700 rounded-lg transition-colors text-white text-sm"
-          >
-            <FileText className="w-4 h-4 text-green-400" />
-            <div className="flex-1">
-              <div className="font-medium">PDF Documents</div>
-              <div className="text-xs text-gray-400">PDF files (Max 25MB)</div>
-            </div>
-          </button>
-        </div>
-      )}
+  if (diffInHours < 1) {
+    const diffInMinutes = Math.floor(diffInHours * 60);
+    return diffInMinutes <= 1 ? 'Just now' : `${diffInMinutes}m ago`;
+  } else if (diffInHours < 24) {
+    return `${Math.floor(diffInHours)}h ago`;
+  } else {
+    return date.toLocaleDateString([], { 
+      month: 'short', 
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  }
+};
 
-      {/* Emoji Picker */}
-      {showEmojiPicker && !hasAstraMention && (
-        <div
-          ref={emojiPickerRef}
-          className="absolute bottom-full left-0 right-0 mb-2 bg-gray-800 border border-gray-600 rounded-lg shadow-lg p-4 z-50 max-h-64 overflow-y-auto"
-        >
-          <div className="grid grid-cols-10 gap-2">
-            {commonEmojis.map((emoji, index) => (
-              <button
-                key={index}
-                onClick={() => insertEmoji(emoji)}
-                className="text-xl hover:bg-gray-700 rounded p-1 transition-colors"
-              >
-                {emoji}
-              </button>
-            ))}
+export const GroupMessage: React.FC<GroupMessageProps> = ({
+  message,
+  currentUserId,
+  onViewVisualization,
+  onCreateVisualization,
+  visualizationState
+}) => {
+  const isOwnMessage = message.user_id === currentUserId;
+  const isAstraMessage = message.message_type === 'astra';
+  const hasVisualization = message.visualization_data;
+  const isGeneratingVisualization = visualizationState?.isGenerating || false;
+  
+  // Extract media info from message content
+  const { mediaItems, textContent } = extractMediaInfo(message.message_content);
+  const hasMedia = mediaItems.length > 0;
+  
+  // Message expansion logic
+  const [isExpanded, setIsExpanded] = React.useState(false);
+  const isLongMessage = textContent.length > 300;
+  const shouldTruncate = isLongMessage && !isExpanded;
+  const displayText = shouldTruncate 
+    ? textContent.substring(0, 300) + '...'
+    : textContent;
+
+  const lines = displayText.split('\n');
+  const shouldShowMore = lines.length > 5 && !isExpanded;
+  const finalText = shouldShowMore 
+    ? lines.slice(0, 5).join('\n') + '...'
+    : displayText;
+
+  const getButtonText = () => {
+    if (isGeneratingVisualization) {
+      return 'Generating...';
+    }
+    if (hasVisualization || visualizationState?.hasVisualization) {
+      return 'View Visualization';
+    }
+    return 'Create Visualization';
+  };
+
+  const handleVisualizationClick = () => {
+    if (isGeneratingVisualization) {
+      return; // Don't allow clicks while generating
+    }
+    
+    if (hasVisualization && onViewVisualization) {
+      onViewVisualization(message.id, message.visualization_data || undefined);
+    } else if (visualizationState?.hasVisualization && onViewVisualization) {
+      onViewVisualization(message.id, undefined);
+    } else if (isAstraMessage && onCreateVisualization) {
+      onCreateVisualization(message.id, message.message_content);
+    }
+  };
+
+  return (
+    <div className={`flex mb-4 ${isOwnMessage && !isAstraMessage ? 'justify-end' : 'justify-start'}`}>
+      {/* Avatar */}
+      {(!isOwnMessage || isAstraMessage) && (
+        <div className="flex-shrink-0 mr-3">
+          <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
+            isAstraMessage 
+              ? 'bg-gradient-to-br from-blue-600 to-purple-600 text-white'
+              : 'bg-gray-600 text-white'
+          }`}>
+            {isAstraMessage ? '🚀' : message.user_name.charAt(0).toUpperCase()}
           </div>
         </div>
       )}
 
-      {/* Media Preview */}
-      {attachedMedia.length > 0 && (
-        <div className="mb-3 p-4 bg-gray-800 rounded-lg border border-gray-600">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm text-gray-300 font-medium">
-              Attached Media ({attachedMedia.length})
+      {/* Message Content */}
+      <div className={`max-w-[70%] ${isOwnMessage && !isAstraMessage ? 'ml-auto' : ''}`}>
+        {/* User name and timestamp */}
+        {(!isOwnMessage || isAstraMessage) && (
+          <div className="flex items-center space-x-2 mb-1">
+            <span className={`text-sm font-medium ${
+              isAstraMessage ? 'text-blue-300' : 'text-gray-300'
+            }`}>
+              {message.user_name}
+            </span>
+            <span className="text-xs text-gray-500">
+              {formatTime(message.created_at)}
             </span>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {attachedMedia.map((media, index) => (
-              <div key={index} className="relative group">
-                {uploadingFiles.size > 0 && (
-                  <div className="absolute inset-0 bg-black/50 rounded-lg flex items-center justify-center z-10">
-                    <div className="text-center">
-                      <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin mx-auto mb-2" />
-                      <div className="text-xs text-white">Uploading...</div>
-                    </div>
-                  </div>
-                )}
-                <div className="bg-gray-700 rounded-lg p-3 border border-gray-600">
-                  {media.type === 'image' ? (
-                    <div className="flex items-center space-x-3">
-                      <img
-                        src={media.preview}
-                        alt="Preview"
-                        className="w-12 h-12 object-cover rounded-lg flex-shrink-0"
-                      />
-                      <div className="flex-1 min-w-0">
-                        <div className="text-sm font-medium text-white truncate">
-                          {media.file.name}
-                        </div>
-                        <div className="text-xs text-gray-400">
-                          Image • {(media.file.size / (1024 * 1024)).toFixed(2)} MB
-                        </div>
-                      </div>
-                    </div>
-                  ) : media.type === 'video' ? (
-                    <div className="flex items-center space-x-3">
-                      <div className="w-12 h-12 bg-gray-600 rounded-lg flex items-center justify-center flex-shrink-0">
-                        <Video className="w-6 h-6 text-purple-400" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="text-sm font-medium text-white truncate">
-                          {media.file.name}
-                        </div>
-                        <div className="text-xs text-gray-400">
-                          Video • {(media.file.size / (1024 * 1024)).toFixed(2)} MB
-                        </div>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="flex items-center space-x-3">
-                      <div className="w-12 h-12 bg-gray-600 rounded-lg flex items-center justify-center flex-shrink-0">
-                        <FileText className="w-6 h-6 text-green-400" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="text-sm font-medium text-white truncate">
-                          {media.file.name}
-                        </div>
-                        <div className="text-xs text-gray-400">
-                          PDF • {(media.file.size / (1024 * 1024)).toFixed(2)} MB
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                  <button
-                    onClick={() => removeMedia(index)}
-                    className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 hover:bg-red-600 rounded-full flex items-center justify-center transition-colors shadow-lg"
-                  >
-                    <X className="w-3 h-3 text-white" />
-                  </button>
-                  </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+        )}
 
-      {/* Input area */}
-      <div className="flex items-end space-x-3">
-        <div className="flex-1 relative">
-          <textarea
-            ref={textareaRef}
-            value={value}
-            onChange={handleInputChange}
-            onKeyDown={handleKeyPress}
-            placeholder={placeholder}
-            disabled={disabled}
-            className="w-full resize-none rounded-2xl border border-gray-600 bg-gray-800 text-white px-4 py-3 pr-12 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none disabled:bg-gray-700 disabled:cursor-not-allowed max-h-32 min-h-[48px] text-sm leading-relaxed placeholder-gray-400"
-            rows={1}
-            style={{ 
-              scrollbarWidth: 'thin',
-              scrollbarColor: '#3b82f6 #374151'
-            }}
-          />
-        </div>
-        
-        <div className="flex items-center space-x-2">
-          <button
-            type="button"
-            onClick={() => setShowMediaMenu(!showMediaMenu)}
-            className="p-3 hover:bg-gray-700 rounded-full transition-colors min-h-[48px] min-w-[48px] flex items-center justify-center touch-manipulation"
-            title="Upload media files"
-          >
-            <Image className="w-5 h-5 text-gray-400" />
-          </button>
+        {/* Message bubble */}
+        <div className={`rounded-2xl px-4 py-3 ${
+          isOwnMessage && !isAstraMessage
+            ? 'bg-gradient-to-br from-blue-600 to-purple-600 text-white'
+            : isAstraMessage
+            ? 'bg-gradient-to-br from-gray-700 to-gray-800 text-white border border-blue-500/20'
+            : 'bg-gray-700 text-white'
+        }`}>
+          {/* Show original prompt for Astra messages */}
+          {isAstraMessage && message.astra_prompt && (
+            <div className="mb-3 pb-3 border-b border-gray-600/50">
+              <div className="text-xs text-gray-400 mb-1">Responding to:</div>
+              <div className="text-sm text-gray-300 italic">"{message.astra_prompt}"</div>
+              <div className="text-xs text-blue-300 mt-1">Asked by {message.metadata?.asked_by_user_name || 'Unknown User'}</div>
+            </div>
+          )}
+
+          <div className="break-words text-sm leading-relaxed">
+            {/* Media content */}
+            {hasMedia && (
+              <div className="space-y-3 mb-3">
+                {mediaItems.map((media, index) => (
+                  <div key={index} className="rounded-lg overflow-hidden bg-gray-600/20 border border-gray-600/30">
+                    {media.type === 'image' && media.preview ? (
+                      <div className="relative group cursor-pointer">
+                        <img
+                          src={media.preview}
+                          alt={media.name}
+                          className="w-full max-w-sm h-auto max-h-48 object-cover rounded-lg hover:opacity-90 transition-opacity"
+                          onClick={() => window.open(media.preview, '_blank')}
+                          onError={(e) => {
+                            console.error('Image failed to load:', media.preview);
+                            // Fallback to filename display
+                            const target = e.target as HTMLImageElement;
+                            target.style.display = 'none';
+                            const fallback = target.nextElementSibling as HTMLElement;
+                            if (fallback) fallback.style.display = 'block';
+                          }}
+                        />
+                        <div className="hidden p-3 text-center bg-gray-700 rounded-lg">
+                          <div className="text-2xl mb-2">🖼️</div>
+                          <div className="text-sm text-white">{media.name}</div>
+                          <div className="text-xs text-gray-400 mt-1">Image failed to load</div>
+                        </div>
+                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors rounded-lg flex items-center justify-center">
+                          <div className="opacity-0 group-hover:opacity-100 transition-opacity bg-black/70 text-white px-3 py-2 rounded-lg text-sm font-medium">
+                            Click to view full size
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex items-center space-x-3 p-3">
+                        <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${
+                          media.type === 'image' ? 'bg-blue-500/20' : media.type === 'video' ? 'bg-purple-500/20' : 'bg-green-500/20'
+                        }`}>
+                          <span className="text-2xl">{media.emoji}</span>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-medium text-gray-200 truncate">
+                            {media.name}
+                          </div>
+                          <div className="text-xs text-gray-400">
+                            {media.type === 'image' ? 'Image file' : media.type === 'video' ? 'Video file' : 'PDF file'}
+                            {media.type === 'image' && ' • Preview expired'}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+            
+            {/* Text content - now appears below media */}
+            {finalText && (
+              <div className="mb-2">
+                {isOwnMessage && !isAstraMessage ? (
+                  <div className="whitespace-pre-wrap">{finalText}</div>
+                ) : (
+                  formatMessageContent(finalText, message.mentions, isAstraMessage)
+                )}
+              </div>
+            )}
+          </div>
           
-          {!hasAstraMention && (
+          {/* Show More/Less button */}
+          {(isLongMessage || shouldShowMore) && (
             <button
-              type="button"
-              onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-              className="p-3 hover:bg-gray-700 rounded-full transition-colors min-h-[48px] min-w-[48px] flex items-center justify-center touch-manipulation"
+              onClick={() => setIsExpanded(!isExpanded)}
+              className="text-xs underline mt-2 opacity-90 hover:opacity-100 transition-opacity"
             >
-              <Smile className="w-5 h-5 text-gray-400" />
+              {isExpanded ? 'Show Less' : 'Show More'}
             </button>
           )}
-          
-          <button
-            onClick={handleSubmitWithMedia}
-            disabled={disabled || (!value.trim() && attachedMedia.length === 0) || uploadingFiles.size > 0}
-            className={`text-white rounded-full p-3 transition-all duration-200 transform hover:scale-105 disabled:scale-100 disabled:cursor-not-allowed min-h-[48px] min-w-[48px] flex items-center justify-center touch-manipulation ${
-              uploadingFiles.size > 0
-                ? 'bg-gradient-to-r from-orange-500 to-orange-600 animate-pulse'
-                : 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 disabled:from-gray-600 disabled:to-gray-700'
-            }`}
-          >
-            {uploadingFiles.size > 0 ? (
-              <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-            ) : (
-              <Send className="w-5 h-5" />
-            )}
-          </button>
+
+          {/* Visualization button for Astra messages */}
+          {isAstraMessage && (onViewVisualization || onCreateVisualization) && (
+            <div className="mt-3">
+              <button
+                onClick={handleVisualizationClick}
+                disabled={isGeneratingVisualization}
+                className={`flex items-center space-x-2 text-white px-3 py-2 rounded-lg text-xs font-medium transition-all duration-200 transform disabled:cursor-not-allowed ${
+                  isGeneratingVisualization
+                    ? 'bg-gradient-to-r from-purple-500 to-purple-600 animate-pulse cursor-not-allowed'
+                    : (hasVisualization || visualizationState?.hasVisualization)
+                    ? 'bg-gradient-to-r from-green-500 via-blue-500 to-purple-500 bg-[length:200%_100%] animate-[gradient_3s_ease-in-out_infinite] hover:scale-105 shadow-lg'
+                    : 'bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 hover:scale-105'
+                }`}
+              >
+                {(hasVisualization || visualizationState?.hasVisualization) && !isGeneratingVisualization ? (
+                  <Check className="w-4 h-4" />
+                ) : (
+                  <BarChart3 className={`w-4 h-4 ${isGeneratingVisualization ? 'animate-spin' : ''}`} />
+                )}
+                <span>{getButtonText()}</span>
+                {isGeneratingVisualization && (
+                  <div className="flex space-x-1 ml-1">
+                    <div className="w-1 h-1 bg-white rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                    <div className="w-1 h-1 bg-white rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                    <div className="w-1 h-1 bg-white rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                  </div>
+                )}
+              </button>
+              
+              {/* Retry button - only show when visualization exists */}
+              {(hasVisualization || visualizationState?.hasVisualization) && !isGeneratingVisualization && onCreateVisualization && (
+                <button
+                  onClick={() => onCreateVisualization(message.id, message.message_content)}
+                  className="flex items-center space-x-1 bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 text-white px-2 py-2 rounded-lg text-xs font-medium transition-all duration-200 transform hover:scale-105"
+                  title="Generate a new visualization"
+                >
+                  <RefreshCw className="w-3 h-3" />
+                  <span className="hidden sm:inline">Retry</span>
+                </button>
+              )}
+            </div>
+          )}
+
+          {/* Timestamp for own messages */}
+          {isOwnMessage && !isAstraMessage && (
+            <div className="text-xs opacity-70 mt-2">
+              {formatTime(message.created_at)}
+            </div>
+          )}
         </div>
       </div>
     </div>

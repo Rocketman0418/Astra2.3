@@ -282,7 +282,7 @@ export const GroupMessage: React.FC<GroupMessageProps> = ({
                     ) : (
                       <div className="flex items-center space-x-3 p-3">
                         <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${
-                          media.type === 'image' ? 'bg-blue-500/20' : media.type === 'video' ? 'bg-purple-500/20' : 'bg-green-500/20'
+                          media.type === 'video' ? 'bg-purple-500/20' : 'bg-blue-500/20'
                         }`}>
                           <span className="text-2xl">{media.emoji}</span>
                         </div>
@@ -295,9 +295,14 @@ export const GroupMessage: React.FC<GroupMessageProps> = ({
                             {media.type === 'image' && ' • Preview expired'}
                           </div>
                         </div>
-                      </div>
-                    )}
-                  </div>
+                        {media.preview && (
+                          <button 
+                            onClick={() => window.open(media.preview, '_blank')}
+                            className="text-xs text-blue-300 hover:text-blue-200 underline px-2 py-1 rounded"
+                          >
+                            View
+                          </button>
+                        )}
                 ))}
               </div>
             )}
