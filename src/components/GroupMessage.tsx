@@ -253,19 +253,20 @@ export const GroupMessage: React.FC<GroupMessageProps> = ({
                 {mediaItems.map((media, index) => (
                   <div key={index} className="rounded-lg overflow-hidden bg-gray-600/20 border border-gray-600/30">
                     {media.type === 'image' && media.preview ? (
-                      <div className="relative">
+                      <div className="relative group cursor-pointer" onClick={() => window.open(media.preview, '_blank')}>
                         <img
                           src={media.preview}
                           alt={media.name}
-                          className="w-full max-w-sm h-auto max-h-64 object-cover rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
-                          onClick={() => window.open(media.preview, '_blank')}
+                          className="w-full max-w-sm h-auto max-h-48 object-cover rounded-lg hover:opacity-90 transition-opacity"
                         />
-                        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-3">
-                          <div className="text-white text-sm font-medium truncate">
-                            {media.name}
-                          </div>
-                          <div className="text-gray-300 text-xs">
+                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors rounded-lg flex items-center justify-center">
+                          <div className="opacity-0 group-hover:opacity-100 transition-opacity bg-black/70 text-white px-3 py-2 rounded-lg text-sm font-medium">
                             Click to view full size
+                          </div>
+                        </div>
+                        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-2">
+                          <div className="text-white text-xs font-medium truncate">
+                            {media.name}
                           </div>
                         </div>
                       </div>
