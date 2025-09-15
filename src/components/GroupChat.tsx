@@ -10,6 +10,7 @@ import { useVisualization } from '../hooks/useVisualization';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import { GroupMessage as GroupMessageType } from '../types';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
 interface User {
   id: string;
@@ -51,8 +52,6 @@ export const GroupChat: React.FC<GroupChatProps> = ({ showSearch = false, showMe
     searchMessages,
   } = useGroupChat();
 
-  // Import Gemini for chat summaries
-  const { GoogleGenerativeAI } = require('@google/generative-ai');
   const {
     generateVisualization,
     showVisualization,
