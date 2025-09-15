@@ -49,7 +49,7 @@ export const Header: React.FC<HeaderProps> = ({
           <img 
             src="/RocketHub Logo Alt 1 Small.png" 
             alt="RocketHub Logo" 
-            className="w-15 h-15 md:w-17 md:h-17 object-contain"
+            className="w-10 h-10 md:w-12 md:h-12 object-contain"
           />
           
           {/* Title and rocket emoji */}
