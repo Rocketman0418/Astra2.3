@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, KeyboardEvent } from 'react';
-import { Send, Smile } from 'lucide-react';
+import { Send, Smile, Paperclip, X, Image, Video } from 'lucide-react';
 
 interface User {
   id: string;
@@ -14,24 +14,35 @@ interface MentionInputProps {
   disabled: boolean;
   placeholder?: string;
   users?: User[];
+  onMediaUpload?: (file: File) => void;
 }
 
+interface MediaFile {
+  file: File;
+  preview: string;
+  type: 'image' | 'video';
+}
 export const MentionInput: React.FC<MentionInputProps> = ({
   value,
   onChange,
   onSend,
   disabled,
   placeholder = "Type a message... Use @astra for AI Intelligence",
-  users = []
+  users = [],
+  onMediaUpload
 }) => {
   const [showMentions, setShowMentions] = useState(false);
   const [mentionQuery, setMentionQuery] = useState('');
   const [selectedMentionIndex, setSelectedMentionIndex] = useState(0);
   const [cursorPosition, setCursorPosition] = useState(0);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [attachedMedia, setAttachedMedia] = useState<MediaFile[]>([]);
+  const [showMediaMenu, setShowMediaMenu] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const mentionsRef = useRef<HTMLDivElement>(null);
   const emojiPickerRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const mediaMenuRef = useRef<HTMLDivElement>(null);
 
   // Add Astra to the users list
   const allUsers = [
@@ -198,6 +209,66 @@ export const MentionInput: React.FC<MentionInputProps> = ({
   // Check if @astra is mentioned (disable emojis for AI queries)
   const hasAstraMention = value.toLowerCase().includes('@astra');
 
+  // Media upload constants
+  const MAX_IMAGE_SIZE = 10 * 1024 * 1024; // 10MB
+  const MAX_VIDEO_SIZE = 50 * 1024 * 1024; // 50MB
+  const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+  const ALLOWED_VIDEO_TYPES = ['video/mp4', 'video/webm', 'video/mov', 'video/avi'];
+
+  // Handle file selection
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (!files) return;
+
+    Array.from(files).forEach(file => {
+      const isImage = ALLOWED_IMAGE_TYPES.includes(file.type);
+      const isVideo = ALLOWED_VIDEO_TYPES.includes(file.type);
+
+      if (!isImage && !isVideo) {
+        alert('Please select a valid image (JPEG, PNG, GIF, WebP) or video (MP4, WebM, MOV, AVI) file.');
+        return;
+      }
+
+      const maxSize = isImage ? MAX_IMAGE_SIZE : MAX_VIDEO_SIZE;
+      if (file.size > maxSize) {
+        const maxSizeMB = maxSize / (1024 * 1024);
+        alert(`File size must be less than ${maxSizeMB}MB for ${isImage ? 'images' : 'videos'}.`);
+        return;
+      }
+
+      // Create preview URL
+      const preview = URL.createObjectURL(file);
+      const mediaFile: MediaFile = {
+        file,
+        preview,
+        type: isImage ? 'image' : 'video'
+      };
+
+      setAttachedMedia(prev => [...prev, mediaFile]);
+    });
+
+    // Reset file input
+    event.target.value = '';
+    setShowMediaMenu(false);
+  };
+
+  // Remove attached media
+  const removeMedia = (index: number) => {
+    setAttachedMedia(prev => {
+      const newMedia = [...prev];
+      URL.revokeObjectURL(newMedia[index].preview);
+      newMedia.splice(index, 1);
+      return newMedia;
+    });
+  };
+
+  // Handle media upload
+  const handleMediaUpload = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  };
+
   // Auto-resize textarea
   useEffect(() => {
     if (textareaRef.current) {
@@ -220,14 +291,61 @@ export const MentionInput: React.FC<MentionInputProps> = ({
           setShowEmojiPicker(false);
         }
       }
+      if (mediaMenuRef.current && !mediaMenuRef.current.contains(event.target as Node)) {
+        // Only close media menu if clicking outside AND not on the media button
+        const target = event.target as Element;
+        const isMediaButton = target.closest('button')?.querySelector('svg')?.classList.contains('lucide-paperclip');
+        if (!isMediaButton) {
+          setShowMediaMenu(false);
+        }
+      }
     };
 
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  // Handle form submission with media
+  const handleSubmitWithMedia = () => {
+    if ((!value.trim() && attachedMedia.length === 0) || disabled) return;
+
+    // If there's media, handle media upload first
+    if (attachedMedia.length > 0 && onMediaUpload) {
+      attachedMedia.forEach(media => {
+        onMediaUpload(media.file);
+      });
+      // Clear attached media
+      attachedMedia.forEach(media => URL.revokeObjectURL(media.preview));
+      setAttachedMedia([]);
+    }
+
+    // Send text message if there's text
+    if (value.trim()) {
+      onSend(value);
+    }
+
+    setShowEmojiPicker(false);
+  };
+
+  // Clean up object URLs on unmount
+  useEffect(() => {
+    return () => {
+      attachedMedia.forEach(media => URL.revokeObjectURL(media.preview));
+    };
+  }, []);
+
   return (
     <div className="relative">
+      {/* Hidden file input */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept={[...ALLOWED_IMAGE_TYPES, ...ALLOWED_VIDEO_TYPES].join(',')}
+        multiple
+        onChange={handleFileSelect}
+        className="hidden"
+      />
+
       {/* Mentions dropdown */}
       {showMentions && filteredUsers.length > 0 && (
         <div
@@ -258,6 +376,31 @@ export const MentionInput: React.FC<MentionInputProps> = ({
         </div>
       )}
 
+      {/* Media Menu */}
+      {showMediaMenu && (
+        <div
+          ref={mediaMenuRef}
+          className="absolute bottom-full left-0 mb-2 bg-gray-800 border border-gray-600 rounded-lg shadow-lg p-2 z-50"
+        >
+          <button
+            onClick={handleMediaUpload}
+            className="flex items-center space-x-2 w-full text-left px-3 py-2 hover:bg-gray-700 rounded-lg transition-colors text-white text-sm"
+          >
+            <Image className="w-4 h-4 text-blue-400" />
+            <span>Upload Image</span>
+            <span className="text-xs text-gray-400">(Max 10MB)</span>
+          </button>
+          <button
+            onClick={handleMediaUpload}
+            className="flex items-center space-x-2 w-full text-left px-3 py-2 hover:bg-gray-700 rounded-lg transition-colors text-white text-sm"
+          >
+            <Video className="w-4 h-4 text-purple-400" />
+            <span>Upload Video</span>
+            <span className="text-xs text-gray-400">(Max 50MB)</span>
+          </button>
+        </div>
+      )}
+
       {/* Emoji Picker */}
       {showEmojiPicker && !hasAstraMention && (
         <div
@@ -273,6 +416,45 @@ export const MentionInput: React.FC<MentionInputProps> = ({
               >
                 {emoji}
               </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Media Preview */}
+      {attachedMedia.length > 0 && (
+        <div className="mb-3 p-3 bg-gray-800 rounded-lg border border-gray-600">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm text-gray-300 font-medium">
+              Attached Media ({attachedMedia.length})
+            </span>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+            {attachedMedia.map((media, index) => (
+              <div key={index} className="relative group">
+                {media.type === 'image' ? (
+                  <img
+                    src={media.preview}
+                    alt="Preview"
+                    className="w-full h-20 object-cover rounded-lg"
+                  />
+                ) : (
+                  <video
+                    src={media.preview}
+                    className="w-full h-20 object-cover rounded-lg"
+                    muted
+                  />
+                )}
+                <button
+                  onClick={() => removeMedia(index)}
+                  className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 hover:bg-red-600 rounded-full flex items-center justify-center transition-colors"
+                >
+                  <X className="w-3 h-3 text-white" />
+                </button>
+                <div className="absolute bottom-1 left-1 bg-black/50 text-white text-xs px-1 rounded">
+                  {media.type === 'image' ? '📷' : '🎥'}
+                </div>
+              </div>
             ))}
           </div>
         </div>
@@ -298,6 +480,14 @@ export const MentionInput: React.FC<MentionInputProps> = ({
         </div>
         
         <div className="flex items-center space-x-2">
+          <button
+            type="button"
+            onClick={() => setShowMediaMenu(!showMediaMenu)}
+            className="p-3 hover:bg-gray-700 rounded-full transition-colors min-h-[48px] min-w-[48px] flex items-center justify-center touch-manipulation"
+          >
+            <Paperclip className="w-5 h-5 text-gray-400" />
+          </button>
+          
           {!hasAstraMention && (
             <button
               type="button"
@@ -309,8 +499,8 @@ export const MentionInput: React.FC<MentionInputProps> = ({
           )}
           
           <button
-            onClick={handleSubmit}
-            disabled={disabled || !value.trim()}
+            onClick={handleSubmitWithMedia}
+            disabled={disabled || (!value.trim() && attachedMedia.length === 0)}
             className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 disabled:from-gray-600 disabled:to-gray-700 text-white rounded-full p-3 transition-all duration-200 transform hover:scale-105 disabled:scale-100 disabled:cursor-not-allowed min-h-[48px] min-w-[48px] flex items-center justify-center touch-manipulation"
           >
             <Send className="w-5 h-5" />

@@ -266,6 +266,20 @@ Format the summary in a clear, organized way that helps ${userName} quickly unde
     setInputValue('');
   };
 
+  // Handle media upload
+  const handleMediaUpload = async (file: File) => {
+    console.log('📎 Media upload requested:', {
+      name: file.name,
+      size: file.size,
+      type: file.type
+    });
+    
+    // For now, just show a placeholder message
+    // In a real implementation, you would upload to a file storage service
+    const mediaMessage = `📎 Uploaded ${file.type.startsWith('image/') ? 'image' : 'video'}: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)}MB)`;
+    await sendMessage(mediaMessage);
+  };
+
   // Handle visualization creation
   const handleCreateVisualization = useCallback(async (messageId: string, messageContent: string) => {
     console.log('🎯 Starting visualization generation for message:', messageId);
@@ -638,6 +652,7 @@ Format the summary in a clear, organized way that helps ${userName} quickly unde
               disabled={loading}
               placeholder="Type a message... Use @astra for AI Intelligence"
               users={users}
+            onMediaUpload={handleMediaUpload}
             />
           </div>
         </div>
@@ -769,6 +784,7 @@ Format the summary in a clear, organized way that helps ${userName} quickly unde
           disabled={loading}
           placeholder="Type a message... Use @astra for AI Intelligence"
           users={users}
+          onMediaUpload={handleMediaUpload}
         />
       </div>
     </div>
