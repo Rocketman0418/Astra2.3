@@ -173,14 +173,24 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({
 
   // Handle viewing visualization for private chat
   const handleViewVisualization = useCallback((messageId: string) => {
+    console.log('👁️ Private chat: handleViewVisualization called for messageId:', messageId);
+    
     console.log('👁️ Private chat: Viewing visualization for chatId:', messageId);
     
     // First check local state for the visualization content
     const localState = visualizationStates[messageId];
-    console.log('👁️ Private chat: Local state for messageId:', messageId, localState);
+    console.log('👁️ Private chat: Local state for messageId:', messageId, 'exists:', !!localState, 'hasContent:', !!localState?.content);
     
     if (localState?.content && localState.content !== 'generated') {
       console.log('📊 Private chat: Using local state visualization data');
+      // Update the visualization hook state
+      updateVisualizationState(messageId, {
+        messageId: messageId,
+        isGenerating: false,
+        content: localState.content,
+        hasVisualization: true,
+        isVisible: true
+      });
       showVisualization(messageId);
       return;
     }
@@ -199,7 +209,7 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({
         isGenerating: false,
         content: message.visualization_data,
         hasVisualization: true,
-        isVisible: false
+        isVisible: true
       });
       showVisualization(messageId);
       return;

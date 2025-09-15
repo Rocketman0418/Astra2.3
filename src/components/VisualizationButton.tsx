@@ -20,6 +20,8 @@ export const VisualizationButton: React.FC<VisualizationButtonProps> = ({
   
   const handleClick = () => {
     console.log('🔍 VisualizationButton: Button clicked for messageId:', messageId, 'visualizationState:', visualizationState);
+    console.log('🔍 VisualizationButton: About to call handler - isGenerating:', isGenerating, 'hasVisualization:', !!hasVisualization);
+    
     if (visualizationState?.content) {
       console.log('🔍 VisualizationButton: Viewing existing visualization');
       onViewVisualization(messageId);
