@@ -303,6 +303,9 @@ export const GroupMessage: React.FC<GroupMessageProps> = ({
                             View
                           </button>
                         )}
+                      </div>
+                    )}
+                  </div>
                 ))}
               </div>
             )}
