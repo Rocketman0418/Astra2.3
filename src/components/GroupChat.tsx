@@ -280,19 +280,6 @@ Format the summary in a clear, organized way that helps ${userName} quickly unde
   };
 
   // Handle media upload
-  const handleMediaUpload = (files: File[]) => {
-    // This would typically upload files to a storage service
-    // For now, we'll just create preview info
-    const mediaInfo = files.map(file => ({
-      name: file.name,
-      size: file.size,
-      type: file.type.startsWith('image/') ? 'image' : file.type.startsWith('video/') ? 'video' : 'file',
-      preview: URL.createObjectURL(file)
-    }));
-    
-    // You could auto-send with media or let user add a message
-    handleSendMessage('', mediaInfo);
-  };
 
   // Handle visualization creation
   const handleCreateVisualization = useCallback(async (messageId: string, messageContent: string) => {

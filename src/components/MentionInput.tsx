@@ -311,13 +311,17 @@ export const MentionInput: React.FC<MentionInputProps> = ({
 
   // Handle form submission with media
   const handleSubmitWithMedia = () => {
-    if ((!value.trim() && attachedMedia.length === 0) || disabled) return;
+    if ((!value.trim() && attachedMedia.length === 0) || disabled) {
+      console.log('Cannot send: empty message and no media, or disabled');
+      return;
+    }
 
     // Create message with both text and media
     let messageContent = value.trim();
     
     // If there's media, add media info to the message
     if (attachedMedia.length > 0) {
+      console.log('Sending message with media:', attachedMedia.length, 'files');
       const mediaInfo = attachedMedia.map(media => ({
         name: media.file.name,
         size: media.file.size,
@@ -456,41 +460,69 @@ export const MentionInput: React.FC<MentionInputProps> = ({
 
       {/* Media Preview */}
       {attachedMedia.length > 0 && (
-        <div className="mb-3 p-3 bg-gray-800 rounded-lg border border-gray-600">
+        <div className="mb-3 p-4 bg-gray-800 rounded-lg border border-gray-600">
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm text-gray-300 font-medium">
               Attached Media ({attachedMedia.length})
             </span>
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {attachedMedia.map((media, index) => (
               <div key={index} className="relative group">
-                {media.type === 'image' ? (
-                  <img
-                    src={media.preview}
-                    alt="Preview"
-                    className="w-full h-20 object-cover rounded-lg"
-                  />
-                ) : media.type === 'video' ? (
-                  <video
-                    src={media.preview}
-                    className="w-full h-20 object-cover rounded-lg"
-                    muted
-                  />
-                ) : (
-                  <div className="w-full h-20 bg-gray-700 rounded-lg flex items-center justify-center">
-                    <FileText className="w-8 h-8 text-green-400" />
+                <div className="bg-gray-700 rounded-lg p-3 border border-gray-600">
+                  {media.type === 'image' ? (
+                    <div className="flex items-center space-x-3">
+                      <img
+                        src={media.preview}
+                        alt="Preview"
+                        className="w-12 h-12 object-cover rounded-lg flex-shrink-0"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm font-medium text-white truncate">
+                          {media.file.name}
+                        </div>
+                        <div className="text-xs text-gray-400">
+                          Image • {(media.file.size / (1024 * 1024)).toFixed(2)} MB
+                        </div>
+                      </div>
+                    </div>
+                  ) : media.type === 'video' ? (
+                    <div className="flex items-center space-x-3">
+                      <div className="w-12 h-12 bg-gray-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <Video className="w-6 h-6 text-purple-400" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm font-medium text-white truncate">
+                          {media.file.name}
+                        </div>
+                        <div className="text-xs text-gray-400">
+                          Video • {(media.file.size / (1024 * 1024)).toFixed(2)} MB
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex items-center space-x-3">
+                      <div className="w-12 h-12 bg-gray-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <FileText className="w-6 h-6 text-green-400" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm font-medium text-white truncate">
+                          {media.file.name}
+                        </div>
+                        <div className="text-xs text-gray-400">
+                          PDF • {(media.file.size / (1024 * 1024)).toFixed(2)} MB
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  <button
+                    onClick={() => removeMedia(index)}
+                    className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 hover:bg-red-600 rounded-full flex items-center justify-center transition-colors shadow-lg"
+                  >
+                    <X className="w-3 h-3 text-white" />
+                  </button>
                   </div>
                 )}
-                <button
-                  onClick={() => removeMedia(index)}
-                  className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 hover:bg-red-600 rounded-full flex items-center justify-center transition-colors"
-                >
-                  <X className="w-3 h-3 text-white" />
-                </button>
-                <div className="absolute bottom-1 left-1 bg-black/50 text-white text-xs px-1 rounded">
-                  {media.type === 'image' ? '📷' : media.type === 'video' ? '🎥' : '📄'}
-                </div>
               </div>
             ))}
           </div>
