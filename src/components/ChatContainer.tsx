@@ -80,7 +80,7 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({
     
     // Check if the message has stored visualization in database
     const message = messages.find(m => m.chatId === messageId);
-    if (message?.hasStoredVisualization) {
+    if (message?.visualization || message?.hasStoredVisualization) {
       console.log('🔍 ChatContainer: Message has stored visualization, returning database state');
       return {
         messageId,

@@ -84,7 +84,7 @@ export const useChat = () => {
             timestamp: new Date(dbMessage.createdAt),
             chatId: dbMessage.id,
             visualization: dbMessage.visualization || false,
-            hasStoredVisualization: !!dbMessage.visualization
+            hasStoredVisualization: dbMessage.visualization || false
           });
         }
       });
