@@ -235,12 +235,13 @@ export const useChat = () => {
       
       console.log('🌐 Sending request to webhook:', WEBHOOK_URL);
       console.log('📤 Request payload:', { 
-        chatInput: messageToSend,
+        chatInput: text.trim(), // Send original text to webhook, not the formatted version
         user_id: userId,
         user_email: userEmail,
         user_name: userName,
         conversation_id: currentConversationId,
-        mode: 'private'
+        mode: 'private',
+        reply_to_id: replyState.isReplying ? replyState.messageId : undefined
       });
       
       const response = await fetch(WEBHOOK_URL, {
@@ -248,13 +249,14 @@ export const useChat = () => {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ 
-          chatInput: messageToSend,
+        body: JSON.stringify({
+          chatInput: text.trim(), // Send original text to webhook
           user_id: userId,
           user_email: userEmail,
           user_name: userName,
           conversation_id: currentConversationId,
-          mode: 'private'
+          mode: 'private',
+          reply_to_id: replyState.isReplying ? replyState.messageId : undefined
         })
       });
       const requestEndTime = Date.now();
@@ -341,7 +343,7 @@ export const useChat = () => {
       try {
         // Log user message
         const userChatId = await logChatMessage(
-          messageToSend,
+          text.trim(), // Log original text, not formatted version
           true, // isUser
           currentConversationId || undefined,
           0, // No response time for user messages
@@ -350,7 +352,7 @@ export const useChat = () => {
           { 
             request_time: requestStartTime,
             is_reply: isReplyMessage,
-            reply_to_id: replyState.isReplying ? replyState.messageId : undefined
+            reply_to_id: isReplyMessage ? replyState.messageId : undefined
           },
           false, // visualization
           'private', // mode
