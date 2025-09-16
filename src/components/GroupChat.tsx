@@ -12,6 +12,7 @@ import { useChats } from '../hooks/useChats';
 import { supabase } from '../lib/supabase';
 import { GroupMessage as GroupMessageType } from '../types';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { useNotifications } from '../hooks/useNotifications';
 
 interface User {
   id: string;
@@ -32,6 +33,7 @@ interface GroupChatProps {
 export const GroupChat: React.FC<GroupChatProps> = ({ showTeamMenu = false, onCloseTeamMenu, onSwitchToPrivateChat }) => {
   const { user } = useAuth();
   const { logChatMessage } = useChats();
+  const { notifications, markAsSeen, clearMentions, requestNotificationPermission, isTabActive } = useNotifications();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [inputValue, setInputValue] = useState('');
   const [users, setUsers] = useState<UserWithCurrentFlag[]>([]);
@@ -48,6 +50,7 @@ export const GroupChat: React.FC<GroupChatProps> = ({ showTeamMenu = false, onCl
   const [isCurrentUserAdmin, setIsCurrentUserAdmin] = useState(false);
   const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
   const [lastMessageCount, setLastMessageCount] = useState(0);
+  const [showMentionAlert, setShowMentionAlert] = useState(false);
 
   // Get user's display name
   const getUserName = useCallback(async (): Promise<string> => {
@@ -129,6 +132,31 @@ export const GroupChat: React.FC<GroupChatProps> = ({ showTeamMenu = false, onCl
     }
     setLastMessageCount(messages.length);
   }, [messages.length, lastMessageCount, shouldAutoScroll]);
+
+  // Mark messages as seen when user is in team chat and tab is active
+  useEffect(() => {
+    if (isTabActive && messages.length > 0) {
+      const latestMessage = messages[messages.length - 1];
+      markAsSeen(latestMessage.id);
+    }
+  }, [isTabActive, messages, markAsSeen]);
+
+  // Show mention alert when there are new mentions
+  useEffect(() => {
+    if (notifications.mentions.length > 0 && isTabActive) {
+      setShowMentionAlert(true);
+      // Auto-hide after 5 seconds
+      const timer = setTimeout(() => {
+        setShowMentionAlert(false);
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [notifications.mentions.length, isTabActive]);
+
+  // Request notification permission on mount
+  useEffect(() => {
+    requestNotificationPermission();
+  }, [requestNotificationPermission]);
 
   // Handle search functionality
   const handleSearch = useCallback(async (query: string) => {
@@ -908,6 +936,40 @@ ${finalSummary}
         )}
 
         {/* Main Chat Area */}
+      {/* Mention Alert */}
+      {showMentionAlert && notifications.mentions.length > 0 && (
+        <div className="fixed top-20 right-4 z-50 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-lg shadow-lg p-4 max-w-sm animate-slide-in">
+          <div className="flex items-start justify-between">
+            <div className="flex-1">
+              <div className="flex items-center space-x-2 mb-2">
+                <span className="text-lg">@</span>
+                <span className="font-bold">You were mentioned!</span>
+              </div>
+              <div className="text-sm opacity-90">
+                <strong>{notifications.mentions[0].userName}</strong> mentioned you:
+              </div>
+              <div className="text-sm mt-1 bg-red-600/30 rounded p-2">
+                "{notifications.mentions[0].message}"
+              </div>
+            </div>
+            <button
+              onClick={() => {
+                setShowMentionAlert(false);
+                clearMentions();
+              }}
+              className="p-1 hover:bg-red-600 rounded transition-colors ml-2"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+          {notifications.mentions.length > 1 && (
+            <div className="text-xs mt-2 opacity-80">
+              +{notifications.mentions.length - 1} more mention{notifications.mentions.length > 2 ? 's' : ''}
+            </div>
+          )}
+        </div>
+      )}
+
         <div className="flex-1 flex flex-col lg:ml-0">
           {/* Messages */}
           <div className="flex-1 overflow-y-auto p-4 space-y-1 chat-messages-container">
