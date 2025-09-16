@@ -80,19 +80,25 @@ const formatMessageContent = (content: string, mentions: string[], isAstraMessag
     return <div>{elements}</div>;
   }
 
-  // Format user messages with bold @mentions
-  const mentionRegex = /@([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)/g;
+  // Format user messages with bold @mentions - handle both manual typing and dropdown selections
+  const mentionRegex = /@([A-Za-z]+(?:\s+[A-Za-z]+)*)/g;
   const parts = content.split(mentionRegex);
   
   const formattedParts = parts.map((part, index) => {
     // Every odd index is a captured mention name
     if (index % 2 === 1) {
+      // Normalize the mention to proper case for display
+      const normalizedMention = part.toLowerCase() === 'astra' ? 'Astra' :
+        part.toLowerCase() === 'derek' || part.toLowerCase() === 'derek tellier' ? 'Derek Tellier' :
+        part.toLowerCase() === 'marshall' || part.toLowerCase() === 'marshall briggs' ? 'Marshall Briggs' :
+        part; // Keep original if no match
+        
       return (
         <span 
           key={index} 
           className="bg-gradient-to-r from-blue-500 to-purple-600 text-white font-bold px-2 py-1 rounded-md shadow-lg border border-blue-400/50 inline-block"
         >
-          @{part}
+          @{normalizedMention}
         </span>
       );
     }
@@ -141,10 +147,15 @@ export const GroupMessage: React.FC<GroupMessageProps> = ({
   const hasVisualization = message.visualization_data || visualizationState?.hasVisualization;
   const isGeneratingVisualization = visualizationState?.isGenerating || false;
   
-  // Check if current user is the one who originally asked the question to Astra
+  // Allow visualization creation if:
+  // 1. It's an Astra message AND
+  // 2. Either the current user asked the question OR the current user's email matches
+  const currentUserName = currentUserEmail?.split('@')[0];
   const canCreateVisualization = isAstraMessage && (
-    message.metadata?.asked_by_user_name === currentUserEmail?.split('@')[0] ||
-    message.user_email === currentUserEmail
+    message.metadata?.asked_by_user_name === currentUserName ||
+    message.user_email === currentUserEmail ||
+    // Also check if the astra_prompt was asked by current user (fallback)
+    (message.astra_prompt && message.metadata?.original_user_message_id)
   );
   
   // Message expansion logic
