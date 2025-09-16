@@ -80,19 +80,16 @@ const formatMessageContent = (content: string, mentions: string[], isAstraMessag
     return <div>{elements}</div>;
   }
 
-  // Regular user message formatting with mentions
+  // Handle mentions for user messages
   if (mentions.length === 0) {
     return <span className="text-gray-300">{content}</span>;
   }
 
-  // Process mentions - handle both partial (@clay) and full (@clay speakman) mentions
-  let formattedContent = content;
-  
-  // Create mention replacements
-  const mentionReplacements: { pattern: RegExp; replacement: string }[] = [];
+  // Create a map of mention variations to full proper names
+  const mentionMap = new Map<string, string>();
   
   mentions.forEach(mention => {
-    // Convert mention to proper case (capitalize each word)
+    // Convert to proper case
     const properCaseMention = mention
       .toLowerCase()
       .split(' ')
@@ -102,31 +99,28 @@ const formatMessageContent = (content: string, mentions: string[], isAstraMessag
     const words = mention.toLowerCase().split(' ');
     const firstName = words[0];
     
-    // Handle @firstname mentions (like @clay) - replace with full name
-    const firstNamePattern = new RegExp(`@${firstName}(?!\\w)`, 'gi');
-    mentionReplacements.push({
-      pattern: firstNamePattern,
-      replacement: `<span class="bg-gradient-to-r from-blue-500 to-purple-600 text-white font-bold px-2 py-1 rounded-md shadow-lg border border-blue-400/50">@${properCaseMention}</span>`
-    });
-    
-    // Handle full name mentions (like @clay speakman) - replace with proper case
+    // Map both @firstname and @full name to the proper case full name
+    mentionMap.set(`@${firstName}`, `@${properCaseMention}`);
     if (words.length > 1) {
-      const fullNamePattern = new RegExp(`@${mention.toLowerCase().replace(/\s+/g, '\\s+')}(?!\\w)`, 'gi');
-      mentionReplacements.push({
-        pattern: fullNamePattern,
-        replacement: `<span class="bg-gradient-to-r from-blue-500 to-purple-600 text-white font-bold px-2 py-1 rounded-md shadow-lg border border-blue-400/50">@${properCaseMention}</span>`
-      });
+      mentionMap.set(`@${mention.toLowerCase()}`, `@${properCaseMention}`);
     }
   });
   
-  // Sort by pattern length (longest first) to avoid partial replacements
-  mentionReplacements.sort((a, b) => b.pattern.source.length - a.pattern.source.length);
+  // Sort mention keys by length (longest first) to avoid partial replacements
+  const sortedMentions = Array.from(mentionMap.keys()).sort((a, b) => b.length - a.length);
   
-  // Apply all replacements
-  mentionReplacements.forEach(({ pattern, replacement }) => {
-    formattedContent = formattedContent.replace(pattern, replacement);
+  let formattedContent = content;
+  
+  // Replace mentions with styled versions
+  sortedMentions.forEach(mentionKey => {
+    const fullName = mentionMap.get(mentionKey)!;
+    const escapedKey = mentionKey.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const regex = new RegExp(`\\b${escapedKey}\\b`, 'gi');
+    
+    formattedContent = formattedContent.replace(regex, 
+      `<span class="bg-gradient-to-r from-blue-500 to-purple-600 text-white font-bold px-2 py-1 rounded-md shadow-lg border border-blue-400/50">${fullName}</span>`
+    );
   });
-
   return (
     <span 
       className="text-gray-300"
