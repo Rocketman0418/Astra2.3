@@ -315,8 +315,8 @@ export const MentionInput: React.FC<MentionInputProps> = ({
       )}
 
       {/* Input area */}
-      <div className="flex items-end space-x-3">
-        <div className="flex-1 relative">
+      <div className="relative">
+        <div className="relative">
           <textarea
             ref={textareaRef}
             value={value}
@@ -324,16 +324,42 @@ export const MentionInput: React.FC<MentionInputProps> = ({
             onKeyDown={handleKeyPress}
             placeholder={placeholder}
             disabled={disabled}
-            className="w-full resize-none rounded-2xl border border-gray-600 bg-gray-800 text-white px-4 py-3 pr-12 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none disabled:bg-gray-700 disabled:cursor-not-allowed max-h-32 min-h-[72px] text-sm leading-relaxed placeholder-gray-400"
+            className={`w-full resize-none rounded-2xl border border-gray-600 bg-gray-800 text-white px-4 py-3 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none disabled:bg-gray-700 disabled:cursor-not-allowed max-h-32 min-h-[72px] text-sm leading-relaxed placeholder-gray-400 ${
+              hasAstraMention ? 'pr-16' : 'pr-24'
+            }`}
             rows={3}
             style={{ 
               scrollbarWidth: 'thin',
               scrollbarColor: '#3b82f6 #374151'
             }}
           />
+          
+          {/* Buttons inside input */}
+          <div className="absolute right-2 bottom-2 flex items-center space-x-1">
+            {!hasAstraMention && (
+              <button
+                type="button"
+                onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                className="p-2 hover:bg-gray-700 rounded-full transition-colors min-h-[40px] min-w-[40px] flex items-center justify-center touch-manipulation"
+              >
+                <Smile className="w-4 h-4 text-gray-400" />
+              </button>
+            )}
+            
+            <button
+              onClick={handleButtonClick}
+              disabled={disabled || !value.trim()}
+              className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 disabled:from-gray-600 disabled:to-gray-700 text-white rounded-full p-2 transition-all duration-200 transform hover:scale-105 disabled:scale-100 disabled:cursor-not-allowed min-h-[40px] min-w-[40px] flex items-center justify-center touch-manipulation"
+            >
+              <Send className="w-4 h-4" />
+            </button>
+          </div>
         </div>
-        
-        <div className="flex items-center space-x-2">
+      </div>
+    </div>
+  );
+};
+
           {!hasAstraMention && (
             <button
               type="button"
