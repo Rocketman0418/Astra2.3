@@ -338,7 +338,44 @@ export const useChats = () => {
 
   // Get visualization state for a message
   const getVisualizationState = useCallback((messageId: string) => {
-    return visualizationStates[messageId] || null;
+    // First check if we have it in local state
+    const localState = visualizationStates[messageId];
+    if (localState) {
+      return localState;
+    }
+
+    // Then check if we can get it from current messages (database state)
+    const message = currentMessages.find(m => m.id === messageId);
+    if (message) {
+      // Check if visualization is being generated
+      if (message.metadata?.visualization_generating) {
+        return {
+          isGenerating: true,
+          content: null,
+          hasVisualization: false
+        };
+      }
+      
+      // Check if visualization exists
+      if (message.visualizationData) {
+        return {
+          isGenerating: false,
+          content: message.visualizationData,
+          hasVisualization: true
+        };
+      }
+      
+      // Check if visualization flag is set but no data (might be generating)
+      if (message.visualization && !message.visualizationData) {
+        return {
+          isGenerating: true,
+          content: null,
+          hasVisualization: false
+        };
+      }
+    }
+
+    return null;
   }, [visualizationStates]);
 
   // Update visualization state

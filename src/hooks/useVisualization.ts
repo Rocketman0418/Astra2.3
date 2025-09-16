@@ -3,7 +3,11 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import { VisualizationState } from '../types';
 import { supabase } from '../lib/supabase';
 
-export const useVisualization = (updateVisualizationStatus?: (messageId: string, hasVisualization: boolean) => void) => {
+export const useVisualization = (
+  updateVisualizationStatus?: (messageId: string, hasVisualization: boolean) => void,
+  persistentVisualizationStates?: Record<string, any>,
+  updatePersistentVisualizationState?: (messageId: string, state: any) => void
+) => {
   const [visualizations, setVisualizations] = useState<Record<string, VisualizationState>>({});
   const [currentVisualization, setCurrentVisualization] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -13,14 +17,22 @@ export const useVisualization = (updateVisualizationStatus?: (messageId: string,
   const generateVisualization = useCallback(async (messageId: string, messageText: string) => {
     setIsGenerating(true);
 
-    // First, mark the message as having visualization in progress in the database
+    // Mark visualization as generating in persistent state
+    if (updatePersistentVisualizationState) {
+      updatePersistentVisualizationState(messageId, {
+        isGenerating: true,
+        content: null,
+        hasVisualization: false
+      });
+    }
+
+    // Also mark in database
     try {
       await supabase
         .from('astra_chats')
         .update({ 
           visualization: true,
-          visualization: true,
-          metadata: { visualization_generating: false }
+          metadata: { visualization_generating: true }
         })
         .eq('id', messageId);
     } catch (error) {
@@ -123,7 +135,8 @@ Return only the HTML code - no other text or formatting.`;
           .from('astra_chats')
           .update({ 
             visualization_data: cleanedContent,
-            visualization: true 
+            visualization: true,
+            metadata: { visualization_generating: false }
           })
           .eq('id', messageId);
 
@@ -136,6 +149,15 @@ Return only the HTML code - no other text or formatting.`;
         console.error('❌ Database error while saving visualization:', dbError);
       }
       
+      // Update persistent state
+      if (updatePersistentVisualizationState) {
+        updatePersistentVisualizationState(messageId, {
+          isGenerating: false,
+          content: cleanedContent,
+          hasVisualization: true
+        });
+      }
+
       setVisualizations(prev => ({
         ...prev,
         [messageId]: {
@@ -152,6 +174,16 @@ Return only the HTML code - no other text or formatting.`;
       
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       
+      // Update persistent state with error
+      if (updatePersistentVisualizationState) {
+        updatePersistentVisualizationState(messageId, {
+          isGenerating: false,
+          content: null,
+          hasVisualization: false,
+          error: errorMessage
+        });
+      }
+
       setVisualizations(prev => ({
         ...prev,
         [messageId]: {
@@ -180,7 +212,7 @@ Return only the HTML code - no other text or formatting.`;
     } finally {
       setIsGenerating(false);
     }
-  }, [updateVisualizationStatus]);
+  }, [updateVisualizationStatus, updatePersistentVisualizationState]);
 
   const showVisualization = useCallback((messageId: string) => {
     // Save current scroll position before showing visualization
@@ -245,6 +277,10 @@ Return only the HTML code - no other text or formatting.`;
   }, [messageToHighlight, savedScrollPosition]);
 
   const getVisualization = useCallback((messageId: string) => {
+    // Check persistent state first, then local state
+    if (persistentVisualizationStates && persistentVisualizationStates[messageId]) {
+      return persistentVisualizationStates[messageId];
+    }
     return visualizations[messageId] || null;
   }, [visualizations]);
 

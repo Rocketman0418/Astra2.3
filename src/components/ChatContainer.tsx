@@ -61,7 +61,11 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({
     currentVisualization,
     messageToHighlight,
     clearHighlight
-  } = useVisualization(updateVisualizationStatus);
+  } = useVisualization(
+    updateVisualizationStatus,
+    getVisualizationState, // Pass the persistent states
+    updateVisualizationState // Pass the update function
+  );
 
   // Get visualization state - check local state first, then hook state
   const getLocalVisualizationState = useCallback((messageId: string) => {
