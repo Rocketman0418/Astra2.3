@@ -85,7 +85,9 @@ const formatMessageContent = (content: string, mentions: string[], isAstraMessag
     return <span className="text-gray-300">{content}</span>;
   }
 
-  let formattedContent = content;
+  // Create a map of mention variations to their proper case full names
+  const mentionMap = new Map<string, string>();
+  
   mentions.forEach(mention => {
     // Convert mention to proper case (capitalize each word)
     const properCaseMention = mention
@@ -94,25 +96,38 @@ const formatMessageContent = (content: string, mentions: string[], isAstraMessag
       .map(word => word.charAt(0).toUpperCase() + word.slice(1))
       .join(' ');
     
-    // Look for @mention patterns in the content and replace with full name
-    // This handles cases like @clay -> @Clay Speakman, @derek -> @Derek Tellier
-    const mentionWords = mention.toLowerCase().split(' ');
-    const firstName = mentionWords[0];
+    // Add various forms of the mention to the map
+    const words = mention.toLowerCase().split(' ');
+    const firstName = words[0];
     
-    // Create regex to match @firstname (case insensitive)
-    const firstNameRegex = new RegExp(`@${firstName}(?!\\w)`, 'gi');
+    // Map @firstname to @Full Name
+    mentionMap.set(`@${firstName}`, `@${properCaseMention}`);
     
-    // Replace @firstname with @Full Name
-    formattedContent = formattedContent.replace(
-      firstNameRegex,
-      `<span class="bg-gradient-to-r from-blue-500 to-purple-600 text-white font-bold px-2 py-1 rounded-md shadow-lg border border-blue-400/50">@${properCaseMention}</span>`
+    // Map @full name to @Full Name
+    mentionMap.set(`@${mention.toLowerCase()}`, `@${properCaseMention}`);
+    
+    // Handle spaced versions
+    mentionMap.set(`@${mention.toLowerCase().replace(/\s+/g, ' ')}`, `@${properCaseMention}`);
+  });
+
+  let formattedContent = content;
+  
+  // Sort mention keys by length (longest first) to avoid partial replacements
+  const sortedMentionKeys = Array.from(mentionMap.keys()).sort((a, b) => b.length - a.length);
+  
+  sortedMentionKeys.forEach(mentionKey => {
+    const properCaseMention = mentionMap.get(mentionKey)!;
+    
+    // Create regex that matches the mention key with word boundaries
+    const mentionRegex = new RegExp(
+      mentionKey.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '(?!\\w)',
+      'gi'
     );
     
-    // Also handle full name mentions like @derek tellier -> @Derek Tellier
-    const fullNameRegex = new RegExp(`@${mention.replace(/\s+/g, '\\s+')}`, 'gi');
+    // Replace with styled version
     formattedContent = formattedContent.replace(
-      fullNameRegex,
-      `<span class="bg-gradient-to-r from-blue-500 to-purple-600 text-white font-bold px-2 py-1 rounded-md shadow-lg border border-blue-400/50">@${properCaseMention}</span>`
+      mentionRegex,
+      `<span class="bg-gradient-to-r from-blue-500 to-purple-600 text-white font-bold px-2 py-1 rounded-md shadow-lg border border-blue-400/50">${properCaseMention}</span>`
     );
   });
 
@@ -269,7 +284,7 @@ export const GroupMessage: React.FC<GroupMessageProps> = ({
 
           <div className="break-words text-sm leading-relaxed">
             {isOwnMessage && !isAstraMessage ? (
-              <div className="whitespace-pre-wrap">{finalText}</div>
+              <div className="whitespace-pre-wrap">{formatMessageContent(finalText, message.mentions, false)}</div>
             ) : (
               formatMessageContent(finalText, message.mentions, isAstraMessage)
             )}
@@ -335,6 +350,7 @@ export const GroupMessage: React.FC<GroupMessageProps> = ({
             <div className="text-xs opacity-70 mt-2">
               {formatTime(message.created_at)}
             </div>
+          </div>
           )}
         </div>
       </div>
