@@ -124,6 +124,7 @@ export const MentionInput: React.FC<MentionInputProps> = ({
   // Handle form submission
   const handleSubmit = () => {
     if (value.trim() && !disabled) {
+      console.log('🚀 MentionInput: handleSubmit called with value:', value);
       onSend(value);
       setShowEmojiPicker(false);
     }

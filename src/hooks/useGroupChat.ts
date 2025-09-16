@@ -110,6 +110,10 @@ export const useGroupChat = () => {
 
   // Send a group message
   const sendMessage = useCallback(async (content: string) => {
+    console.log('🚀 useGroupChat: sendMessage called with content:', content);
+    console.log('🚀 useGroupChat: user exists:', !!user);
+    console.log('🚀 useGroupChat: content trimmed:', content.trim());
+    
     if (!user || !content.trim()) return;
 
     // Check if webhook URL is configured

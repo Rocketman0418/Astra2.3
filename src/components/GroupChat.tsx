@@ -426,6 +426,7 @@ ${finalSummary}
   const handleSendMessage = async (message: string) => {
     if (!message.trim()) return;
     
+    console.log('🚀 GroupChat: handleSendMessage called with message:', message);
     await sendMessage(message);
     setInputValue('');
   };
