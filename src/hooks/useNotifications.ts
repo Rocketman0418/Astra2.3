@@ -126,11 +126,24 @@ export const useNotifications = () => {
     if (!user || !notifications.lastSeenMessageId) return;
 
     try {
+      // First, get the timestamp of the last seen message
+      const { data: lastSeenMessage, error: timestampError } = await supabase
+        .from('astra_chats')
+        .select('created_at')
+        .eq('id', notifications.lastSeenMessageId)
+        .single();
+
+      if (timestampError || !lastSeenMessage) {
+        console.error('Error getting last seen message timestamp:', timestampError);
+        return;
+      }
+
+      // Now count messages created after that timestamp
       const { count, error } = await supabase
         .from('astra_chats')
         .select('*', { count: 'exact', head: true })
         .eq('mode', 'team')
-        .gt('created_at', notifications.lastSeenMessageId);
+        .gt('created_at', lastSeenMessage.created_at);
 
       if (error) {
         console.error('Error counting unread messages:', error);
