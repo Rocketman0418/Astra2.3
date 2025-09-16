@@ -68,12 +68,6 @@ export const useChat = () => {
       isLoading
     });
     
-    // Don't reset messages while we're actively sending/receiving
-    if (isLoading) {
-      console.log('useChat: Skipping message update - currently loading');
-      return;
-    }
-    
     if (currentMessages.length > 0) {
       const uiMessages: Message[] = [];
       
@@ -122,7 +116,7 @@ export const useChat = () => {
         },
         ...uiMessages
       ]);
-    } else if (!currentConversationId || (currentMessages.length === 0 && !chatsLoading && !isLoading)) {
+    } else if (!currentConversationId || (currentMessages.length === 0 && !chatsLoading)) {
       // Reset to welcome message for new conversations
       console.log('useChat: Resetting to welcome message', {
         hasConversationId: !!currentConversationId,
