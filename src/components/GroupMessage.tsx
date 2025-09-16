@@ -87,10 +87,15 @@ const formatMessageContent = (content: string, mentions: string[], isAstraMessag
 
   let formattedContent = content;
   mentions.forEach(mention => {
+    // Convert mention to proper case (capitalize each word)
+    const properCaseMention = mention.split(' ').map(word => 
+      word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+    ).join(' ');
+    
     const mentionRegex = new RegExp(`@${mention}`, 'gi');
     formattedContent = formattedContent.replace(
       mentionRegex,
-      `<span class="bg-blue-600/20 text-blue-300 px-1 rounded">@${mention}</span>`
+      `<span class="bg-gradient-to-r from-blue-500/30 to-purple-500/30 text-white font-bold px-2 py-1 rounded-md border border-blue-400/30 shadow-sm">@${properCaseMention}</span>`
     );
   });
 
