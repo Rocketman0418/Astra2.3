@@ -102,6 +102,7 @@ export const useGroupChat = () => {
       }));
 
       setMessages(transformedMessages);
+      console.log('✅ Team Chat: Messages state updated with', transformedMessages.length, 'messages');
     } catch (err) {
       console.error('Error in fetchMessages:', err);
       setError('Failed to load messages');
