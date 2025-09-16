@@ -87,17 +87,31 @@ const formatMessageContent = (content: string, mentions: string[], isAstraMessag
 
   let formattedContent = content;
   mentions.forEach(mention => {
-    // Convert mention to proper case (capitalize each word) - handle full names
+    // Convert mention to proper case (capitalize each word)
     const properCaseMention = mention
       .toLowerCase()
       .split(' ')
       .map(word => word.charAt(0).toUpperCase() + word.slice(1))
       .join(' ');
     
-    // Create a more flexible regex that matches the mention regardless of case or spacing
-    const mentionRegex = new RegExp(`@${mention.replace(/\s+/g, '\\s*')}`, 'gi');
+    // Look for @mention patterns in the content and replace with full name
+    // This handles cases like @clay -> @Clay Speakman, @derek -> @Derek Tellier
+    const mentionWords = mention.toLowerCase().split(' ');
+    const firstName = mentionWords[0];
+    
+    // Create regex to match @firstname (case insensitive)
+    const firstNameRegex = new RegExp(`@${firstName}(?!\\w)`, 'gi');
+    
+    // Replace @firstname with @Full Name
     formattedContent = formattedContent.replace(
-      mentionRegex,
+      firstNameRegex,
+      `<span class="bg-gradient-to-r from-blue-500 to-purple-600 text-white font-bold px-2 py-1 rounded-md shadow-lg border border-blue-400/50">@${properCaseMention}</span>`
+    );
+    
+    // Also handle full name mentions like @derek tellier -> @Derek Tellier
+    const fullNameRegex = new RegExp(`@${mention.replace(/\s+/g, '\\s+')}`, 'gi');
+    formattedContent = formattedContent.replace(
+      fullNameRegex,
       `<span class="bg-gradient-to-r from-blue-500 to-purple-600 text-white font-bold px-2 py-1 rounded-md shadow-lg border border-blue-400/50">@${properCaseMention}</span>`
     );
   });
