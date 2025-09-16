@@ -89,7 +89,7 @@ const formatMessageContent = (content: string, mentions: string[], isAstraMessag
   const mentionMap = new Map<string, string>();
   
   mentions.forEach(mention => {
-    // Convert to proper case
+    // Convert to proper case (capitalize each word)
     const properCaseMention = mention
       .toLowerCase()
       .split(' ')
