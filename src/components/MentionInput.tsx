@@ -148,6 +148,14 @@ export const MentionInput: React.FC<MentionInputProps> = ({
     }
   };
 
+  // Test button click
+  const handleButtonClick = () => {
+    console.log('🚀 MentionInput: Send button clicked!');
+    console.log('🚀 MentionInput: Current value:', value);
+    console.log('🚀 MentionInput: Button disabled:', disabled);
+    handleSubmit();
+  };
+
   // Common emojis for quick access
   const commonEmojis = [
     // Faces & Expressions
@@ -331,7 +339,7 @@ export const MentionInput: React.FC<MentionInputProps> = ({
           )}
           
           <button
-            onClick={handleSubmit}
+            onClick={handleButtonClick}
             disabled={disabled || !value.trim()}
             className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 disabled:from-gray-600 disabled:to-gray-700 text-white rounded-full p-3 transition-all duration-200 transform hover:scale-105 disabled:scale-100 disabled:cursor-not-allowed min-h-[72px] min-w-[48px] flex items-center justify-center touch-manipulation self-end"
           >
