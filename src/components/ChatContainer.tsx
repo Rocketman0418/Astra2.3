@@ -81,6 +81,16 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({
       return localState;
     }
     
+    // Check if visualization is currently being generated (from database metadata)
+    if (message?.metadata?.visualization_generating) {
+      console.log('🔍 ChatContainer: Visualization is generating (from database) for messageId:', messageId);
+      return {
+        isGenerating: true,
+        content: null,
+        hasVisualization: false,
+      };
+    }
+    
     // Check if the message has stored visualization in database - EXACTLY LIKE TEAM CHAT
     if (message?.visualization_data) {
       console.log('🔍 ChatContainer: Message has stored visualization_data, returning database state for messageId:', messageId);
@@ -88,6 +98,16 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({
         isGenerating: false,
         content: message.visualization_data,
         hasVisualization: true,
+      };
+    }
+    
+    // Check if message has visualization flag but no data yet (might be generating)
+    if (message?.visualization && !message?.visualization_data) {
+      console.log('🔍 ChatContainer: Message has visualization flag but no data, might be generating for messageId:', messageId);
+      return {
+        isGenerating: true,
+        content: null,
+        hasVisualization: false,
       };
     }
     

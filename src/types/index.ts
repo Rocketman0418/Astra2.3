@@ -13,6 +13,7 @@ export interface Message {
   messageType?: 'user' | 'astra' | 'system';
   isReply?: boolean;
   replyToId?: string;
+  metadata?: any;
 }
 
 export interface VisualizationState {

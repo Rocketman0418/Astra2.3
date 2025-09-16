@@ -93,7 +93,8 @@ export const useChat = () => {
             visualization: !!dbMessage.visualizationData,
             hasStoredVisualization: !!dbMessage.visualizationData,
             visualization_data: dbMessage.visualizationData,
-            messageType: 'astra'
+            messageType: 'astra',
+            metadata: dbMessage.metadata || {}
           });
           
           console.log('🔍 useChat: Added Astra message with visualization data:', {

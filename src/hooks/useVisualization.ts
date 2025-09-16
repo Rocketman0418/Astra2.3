@@ -13,6 +13,20 @@ export const useVisualization = (updateVisualizationStatus?: (messageId: string,
   const generateVisualization = useCallback(async (messageId: string, messageText: string) => {
     setIsGenerating(true);
 
+    // First, mark the message as having visualization in progress in the database
+    try {
+      await supabase
+        .from('astra_chats')
+        .update({ 
+          visualization: true,
+          visualization: true,
+          metadata: { visualization_generating: false }
+        })
+        .eq('id', messageId);
+    } catch (error) {
+      console.error('Error marking visualization as generating:', error);
+    }
+
     console.log('📊 Full message text being sent to Gemini:', messageText);
     console.log('📊 Message text length:', messageText.length);
 
@@ -151,6 +165,18 @@ Return only the HTML code - no other text or formatting.`;
           isVisible: false
         }
       }));
+      
+      // Also update database to mark as failed
+      try {
+        await supabase
+          .from('astra_chats')
+          .update({ 
+            metadata: { visualization_generating: false, visualization_error: errorMessage }
+          })
+          .eq('id', messageId);
+      } catch (dbError) {
+        console.error('Error updating database with visualization error:', dbError);
+      }
     } finally {
       setIsGenerating(false);
     }
