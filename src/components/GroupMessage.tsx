@@ -80,47 +80,20 @@ const formatMessageContent = (content: string, mentions: string[], isAstraMessag
     return <div>{elements}</div>;
   }
 
-  // Handle mentions for user messages
-  if (mentions.length === 0) {
-    return <span className="text-gray-300">{content}</span>;
-  }
-
-  // Create a map of mention variations to full proper names
-  const mentionMap = new Map<string, string>();
-  
-  mentions.forEach(mention => {
-    // Convert to proper case (capitalize each word)
-    const properCaseMention = mention
-      .toLowerCase()
-      .split(' ')
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(' ');
-    
-    const words = mention.toLowerCase().split(' ');
-    const firstName = words[0];
-    
-    // Map both @firstname and @full name to the proper case full name
-    mentionMap.set(`@${firstName}`, `@${properCaseMention}`);
-    if (words.length > 1) {
-      mentionMap.set(`@${mention.toLowerCase()}`, `@${properCaseMention}`);
-    }
-  });
-  
-  // Sort mention keys by length (longest first) to avoid partial replacements
-  const sortedMentions = Array.from(mentionMap.keys()).sort((a, b) => b.length - a.length);
-  
+  // Handle mentions for user messages - simple approach
   let formattedContent = content;
   
-  // Replace mentions with styled versions
-  sortedMentions.forEach(mentionKey => {
-    const fullName = mentionMap.get(mentionKey)!;
-    const escapedKey = mentionKey.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    const regex = new RegExp(`\\b${escapedKey}\\b`, 'gi');
+  // Find all @mentions in the content and style them
+  const mentionRegex = /@([a-zA-Z]+(?:\s+[a-zA-Z]+)*)/g;
+  formattedContent = formattedContent.replace(mentionRegex, (match) => {
+    // Convert to proper case
+    const properCaseMatch = match.split(' ').map(word => 
+      word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+    ).join(' ');
     
-    formattedContent = formattedContent.replace(regex, 
-      `<span class="bg-gradient-to-r from-blue-500 to-purple-600 text-white font-bold px-2 py-1 rounded-md shadow-lg border border-blue-400/50">${fullName}</span>`
-    );
+    return `<span class="bg-gradient-to-r from-blue-500 to-purple-600 text-white font-bold px-2 py-1 rounded-md shadow-lg border border-blue-400/50">${properCaseMatch}</span>`;
   });
+  
   return (
     <span 
       className="text-gray-300"

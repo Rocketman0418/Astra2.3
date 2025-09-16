@@ -102,8 +102,11 @@ export const MentionInput: React.FC<MentionInputProps> = ({
     
     if (mentionMatch) {
       const beforeMention = textBeforeCursor.substring(0, mentionMatch.index);
-      const newValue = `${beforeMention}@${user.name.toLowerCase()} ${textAfterCursor}`;
-      const newCursorPos = beforeMention.length + user.name.length + 2;
+      const properCaseName = user.name.split(' ').map(word => 
+        word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+      ).join(' ');
+      const newValue = `${beforeMention}@${properCaseName} ${textAfterCursor}`;
+      const newCursorPos = beforeMention.length + properCaseName.length + 2;
       
       onChange(newValue);
       setShowMentions(false);
