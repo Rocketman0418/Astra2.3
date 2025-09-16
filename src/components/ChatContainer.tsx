@@ -193,7 +193,7 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({
     }
     
     // Check local state for the visualization content
-    const localState = visualizationStates[messageId];
+    const localState = getLocalVisualizationState(messageId);
     console.log('👁️ Private chat: Local state for messageId:', messageId, 'exists:', !!localState, 'hasContent:', !!localState?.content);
     
     if (localState?.content && localState.content !== 'generated') {
