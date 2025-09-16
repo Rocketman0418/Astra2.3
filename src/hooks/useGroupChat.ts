@@ -110,12 +110,6 @@ export const useGroupChat = () => {
 
   // Send a group message
   const sendMessage = useCallback(async (content: string) => {
-    console.log('🚀 useGroupChat: sendMessage called with content:', content);
-    console.log('🚀 useGroupChat: user exists:', !!user);
-    console.log('🚀 useGroupChat: content trimmed:', content.trim());
-    console.log('🚀 useGroupChat: content length:', content.length);
-    console.log('🚀 useGroupChat: content type:', typeof content);
-    
     if (!user || !content.trim()) return;
 
     // Check if webhook URL is configured
@@ -126,17 +120,8 @@ export const useGroupChat = () => {
     }
 
     const mentions = parseMentions(content);
-    console.log('🔍 Team Chat: Parsed mentions from content:', content, 'mentions:', mentions);
-    console.log('🔍 Team Chat: mentions array:', mentions);
-    console.log('🔍 Team Chat: mentions length:', mentions.length);
     const userName = await getUserName();
     const isAstraMention = mentions.some(mention => mention.toLowerCase() === 'astra');
-    console.log('🔍 Team Chat: isAstraMention:', isAstraMention, 'userName:', userName);
-    
-    // Additional debugging for mention detection
-    mentions.forEach((mention, index) => {
-      console.log(`🔍 Team Chat: mention[${index}]:`, mention, 'toLowerCase():', mention.toLowerCase(), 'equals astra:', mention.toLowerCase() === 'astra');
-    });
 
     try {
       // Log user message to astra_chats
@@ -162,14 +147,11 @@ export const useGroupChat = () => {
 
       // If @astra was mentioned, get AI response
       if (isAstraMention) {
-        console.log('🤖 Team Chat: Astra mentioned, setting thinking state and calling webhook');
         setIsAstraThinking(true);
         
         try {
           // Extract the prompt after @astra
           const astraPrompt = content.replace(/@astra\s*/gi, '').trim();
-          console.log('🤖 Team Chat: Extracted astra prompt:', astraPrompt);
-          console.log('🌐 Team Chat: Calling webhook URL:', WEBHOOK_URL);
           
           const response = await fetch(WEBHOOK_URL, {
             method: 'POST',
@@ -188,8 +170,6 @@ export const useGroupChat = () => {
             })
           });
 
-          console.log('📥 Team Chat: Webhook response status:', response.status);
-          
           const requestStartTime = Date.now();
           if (!response.ok) {
             const errorText = await response.text();
@@ -198,7 +178,6 @@ export const useGroupChat = () => {
           }
 
           const responseText = await response.text();
-          console.log('📄 Team Chat: Webhook response text length:', responseText.length);
           const requestEndTime = Date.now();
           const responseTimeMs = requestEndTime - requestStartTime;
           let astraResponse = responseText;
@@ -211,10 +190,7 @@ export const useGroupChat = () => {
             }
           } catch (e) {
             // Use raw text if not JSON
-            console.log('📄 Team Chat: Response is not JSON, using raw text');
           }
-
-          console.log('✅ Team Chat: Astra response received, logging to database');
           
           // Log Astra's response to astra_chats table
           const astraMessageId = await logChatMessage(
@@ -273,8 +249,7 @@ export const useGroupChat = () => {
       console.error('Error in sendMessage:', err);
       setError('Failed to send message');
     }
-  }
-  )
+  }, [user, parseMentions, getUserName, logChatMessage, fetchMessages]);
 
   // Search messages
   const searchMessages = useCallback(async (query: string): Promise<GroupMessage[]> => {
