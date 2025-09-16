@@ -81,9 +81,6 @@ const formatMessageContent = (content: string, mentions: string[], isAstraMessag
   }
 
   // Just return the content as-is for user messages
-    return `<span class="bg-gradient-to-r from-blue-500 to-purple-600 text-white font-bold px-2 py-1 rounded-md shadow-lg border border-blue-400/50">${properCaseMatch}</span>`;
-  });
-  
   return (
     <span className="text-gray-300">
       {content}
