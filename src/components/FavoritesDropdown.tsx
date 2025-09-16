@@ -106,10 +106,14 @@ export const FavoritesDropdown: React.FC<FavoritesDropdownProps> = ({
               </div>
           <h3 className="text-white font-medium text-sm">Saved Prompts</h3>
         )
+        )
+        }
         </div>
       )}
     </div>
   );
 };
+  )
+}
   )
 }
