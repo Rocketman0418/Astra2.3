@@ -357,27 +357,6 @@ export const MentionInput: React.FC<MentionInputProps> = ({
         </div>
       </div>
     </div>
-  );
-};
-
-          {!hasAstraMention && (
-            <button
-              type="button"
-              onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-              className="p-3 hover:bg-gray-700 rounded-full transition-colors min-h-[48px] min-w-[48px] flex items-center justify-center touch-manipulation"
-            >
-              <Smile className="w-5 h-5 text-gray-400" />
-            </button>
-          )}
-          
-          <button
-            onClick={handleButtonClick}
-            disabled={disabled || !value.trim()}
-            className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 disabled:from-gray-600 disabled:to-gray-700 text-white rounded-full p-3 transition-all duration-200 transform hover:scale-105 disabled:scale-100 disabled:cursor-not-allowed min-h-[72px] min-w-[48px] flex items-center justify-center touch-manipulation self-end"
-          >
-            <Send className="w-5 h-5" />
-          </button>
-        </div>
       </div>
     </div>
   );
