@@ -81,7 +81,7 @@ const formatMessageContent = (content: string, mentions: string[], isAstraMessag
   }
 
   // Format user messages with bold @mentions - handle both manual typing and dropdown selections
-  const mentionRegex = /@([A-Za-z]+(?:\s+[A-Za-z]+)*)/g;
+  const mentionRegex = /@([A-Za-z]+(?:\s+[A-Za-z]+)*?)(?=\s|$)/g;
   const parts = content.split(mentionRegex);
   
   const formattedParts = parts.map((part, index) => {
