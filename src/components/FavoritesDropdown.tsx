@@ -104,3 +104,10 @@ export const FavoritesDropdown: React.FC<FavoritesDropdownProps> = ({
                   </button>
                 </div>
               </div>
+        )
+        )
+        }
+      )
+      }
+  )
+}
