@@ -378,6 +378,9 @@ export const useChat = () => {
         
         console.log('✅ Logged Astra response to database:', chatId);
         
+        // Refresh messages to ensure UI is updated with database changes
+        await refreshMessages();
+        
         // Update the message in state with the database chatId
         if (chatId) {
           setMessages(prev => prev.map(msg => 
@@ -416,6 +419,16 @@ export const useChat = () => {
       setIsLoading(false);
     }
   }, [isLoading, logChatMessage, currentConversationId, updateVisualizationStatus, user, userProfile, replyState]);
+
+  // Force refresh of current messages after logging to ensure UI stays in sync
+  const refreshMessages = useCallback(async () => {
+    if (currentConversationId) {
+      // Small delay to ensure database write is complete
+      setTimeout(() => {
+        loadConversation(currentConversationId);
+      }, 100);
+    }
+  }, [currentConversationId, loadConversation]);
 
   const startReply = useCallback((messageId: string, messageText: string) => {
     const snippet = messageText.length > 100 
