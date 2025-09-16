@@ -113,6 +113,8 @@ export const useGroupChat = () => {
     console.log('🚀 useGroupChat: sendMessage called with content:', content);
     console.log('🚀 useGroupChat: user exists:', !!user);
     console.log('🚀 useGroupChat: content trimmed:', content.trim());
+    console.log('🚀 useGroupChat: content length:', content.length);
+    console.log('🚀 useGroupChat: content type:', typeof content);
     
     if (!user || !content.trim()) return;
 
@@ -125,9 +127,16 @@ export const useGroupChat = () => {
 
     const mentions = parseMentions(content);
     console.log('🔍 Team Chat: Parsed mentions from content:', content, 'mentions:', mentions);
+    console.log('🔍 Team Chat: mentions array:', mentions);
+    console.log('🔍 Team Chat: mentions length:', mentions.length);
     const userName = await getUserName();
     const isAstraMention = mentions.some(mention => mention.toLowerCase() === 'astra');
     console.log('🔍 Team Chat: isAstraMention:', isAstraMention, 'userName:', userName);
+    
+    // Additional debugging for mention detection
+    mentions.forEach((mention, index) => {
+      console.log(`🔍 Team Chat: mention[${index}]:`, mention, 'toLowerCase():', mention.toLowerCase(), 'equals astra:', mention.toLowerCase() === 'astra');
+    });
 
     try {
       // Log user message to astra_chats
