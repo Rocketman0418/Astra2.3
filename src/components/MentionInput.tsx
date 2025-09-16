@@ -325,7 +325,7 @@ export const MentionInput: React.FC<MentionInputProps> = ({
             placeholder={placeholder}
             disabled={disabled}
             className={`w-full resize-none rounded-2xl border border-gray-600 bg-gray-800 text-white px-4 py-3 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none disabled:bg-gray-700 disabled:cursor-not-allowed max-h-32 min-h-[72px] text-sm leading-relaxed placeholder-gray-400 ${
-              hasAstraMention ? 'pr-16' : 'pr-24'
+              hasAstraMention ? 'pr-12' : 'pr-20'
             }`}
             rows={3}
             style={{ 
@@ -335,12 +335,12 @@ export const MentionInput: React.FC<MentionInputProps> = ({
           />
           
           {/* Buttons inside input */}
-          <div className="absolute right-2 bottom-2 flex items-center space-x-1">
+          <div className="absolute right-3 bottom-3 flex items-center space-x-2">
             {!hasAstraMention && (
               <button
                 type="button"
                 onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                className="p-2 hover:bg-gray-700 rounded-full transition-colors min-h-[40px] min-w-[40px] flex items-center justify-center touch-manipulation"
+                className="text-gray-400 hover:text-gray-300 transition-colors p-1"
               >
                 <Smile className="w-4 h-4 text-gray-400" />
               </button>
@@ -349,9 +349,9 @@ export const MentionInput: React.FC<MentionInputProps> = ({
             <button
               onClick={handleButtonClick}
               disabled={disabled || !value.trim()}
-              className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 disabled:from-gray-600 disabled:to-gray-700 text-white rounded-full p-2 transition-all duration-200 transform hover:scale-105 disabled:scale-100 disabled:cursor-not-allowed min-h-[40px] min-w-[40px] flex items-center justify-center touch-manipulation"
+              className="text-blue-500 hover:text-blue-400 disabled:text-gray-500 transition-colors disabled:cursor-not-allowed p-1"
             >
-              <Send className="w-4 h-4" />
+              <Send className="w-5 h-5" />
             </button>
           </div>
         </div>

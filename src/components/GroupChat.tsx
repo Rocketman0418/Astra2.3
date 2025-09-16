@@ -1115,14 +1115,18 @@ ${finalSummary}
 
         {/* Input */}
         <div className="bg-gray-900 border-t border-gray-700 p-4">
-          <MentionInput
-            value={inputValue}
-            onChange={setInputValue}
-            onSend={handleSendMessage}
-            disabled={loading}
-            placeholder="Type a message... Use @astra for AI Intelligence"
-            users={users}
-          />
+          <div className="flex items-end space-x-3 max-w-4xl mx-auto">
+            <div className="flex-1">
+              <MentionInput
+                value={inputValue}
+                onChange={setInputValue}
+                onSend={handleSendMessage}
+                disabled={loading}
+                placeholder="Type a message... Use @astra for AI Intelligence"
+                users={users}
+              />
+            </div>
+          </div>
         </div>
       </div>
     </>

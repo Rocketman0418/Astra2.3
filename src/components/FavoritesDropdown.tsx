@@ -59,16 +59,16 @@ export const FavoritesDropdown: React.FC<FavoritesDropdownProps> = ({
       <button
         onClick={() => setIsOpen(!isOpen)}
         disabled={favorites.length === 0}
-        className={`p-2 rounded-full transition-colors min-h-[40px] min-w-[40px] flex items-center justify-center touch-manipulation ${
+        className={`p-3 rounded-lg transition-colors min-h-[48px] min-w-[48px] flex items-center justify-center touch-manipulation ${
           favorites.length === 0
-            ? 'text-gray-600 cursor-not-allowed'
+            ? 'text-gray-600 cursor-not-allowed bg-gray-800'
             : isOpen
-            ? 'bg-blue-500/20 text-blue-400'
-            : 'hover:bg-gray-700 text-gray-400'
+            ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
+            : 'hover:bg-gray-700 text-gray-400 bg-gray-800 border border-gray-600'
         }`}
         title={favorites.length === 0 ? 'No saved prompts yet' : 'Saved prompts'}
       >
-        <Bookmark className={`w-4 h-4 ${favorites.length > 0 && isOpen ? 'fill-current' : ''}`} />
+        <Bookmark className={`w-5 h-5 ${favorites.length > 0 && isOpen ? 'fill-current' : ''}`} />
       </button>
 
       {isOpen && favorites.length > 0 && (

@@ -68,6 +68,17 @@ export const ChatInput: React.FC<ChatInputProps> = ({
       )}
       
       <div className="flex items-end space-x-2 md:space-x-3 max-w-4xl mx-auto">
+        {/* Bookmark button outside input */}
+        {onRemoveFavorite && (
+          <div className="flex-shrink-0 mb-2">
+            <FavoritesDropdown
+              favorites={favorites}
+              onSelectFavorite={handleSelectFavorite}
+              onRemoveFavorite={onRemoveFavorite}
+            />
+          </div>
+        )}
+        
         <div className="flex-1 relative">
           <textarea
             value={value}
@@ -75,7 +86,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
             onKeyPress={handleKeyPress}
             placeholder="Send a message to Astra....."
             disabled={disabled}
-            className="w-full resize-none rounded-2xl border border-gray-600 bg-gray-800 text-white px-3 py-2 md:px-4 md:py-3 pr-20 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none disabled:bg-gray-700 disabled:cursor-not-allowed max-h-32 min-h-[72px] md:min-h-[72px] text-sm md:text-base leading-relaxed placeholder-gray-400"
+            className="w-full resize-none rounded-2xl border border-gray-600 bg-gray-800 text-white px-3 py-2 md:px-4 md:py-3 pr-12 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none disabled:bg-gray-700 disabled:cursor-not-allowed max-h-32 min-h-[72px] md:min-h-[72px] text-sm md:text-base leading-relaxed placeholder-gray-400"
             rows={3}
             style={{ 
               scrollbarWidth: 'thin',
@@ -83,22 +94,14 @@ export const ChatInput: React.FC<ChatInputProps> = ({
             }}
           />
           
-          {/* Buttons inside input */}
-          <div className="absolute right-2 bottom-2 flex items-center space-x-1">
-            {onRemoveFavorite && (
-              <FavoritesDropdown
-                favorites={favorites}
-                onSelectFavorite={handleSelectFavorite}
-                onRemoveFavorite={onRemoveFavorite}
-              />
-            )}
-            
+          {/* Send button inside input */}
+          <div className="absolute right-3 bottom-3">
             <button
               onClick={handleSubmit}
               disabled={disabled || !value.trim()}
-              className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 disabled:from-gray-600 disabled:to-gray-700 text-white rounded-full p-2 transition-all duration-200 transform hover:scale-105 disabled:scale-100 disabled:cursor-not-allowed min-h-[40px] min-w-[40px] flex items-center justify-center touch-manipulation"
+              className="text-blue-500 hover:text-blue-400 disabled:text-gray-500 transition-colors disabled:cursor-not-allowed p-1"
             >
-              <Send className="w-4 h-4" />
+              <Send className="w-5 h-5" />
             </button>
           </div>
         </div>
