@@ -54,6 +54,7 @@ export const MentionInput: React.FC<MentionInputProps> = ({
   // Handle input changes
   const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     console.log('🔧 MentionInput: Input changed:', e.target.value);
+    console.log('🔧 MentionInput: onChange prop type:', typeof onChange);
     const newValue = e.target.value;
     const cursorPos = e.target.selectionStart || 0;
     
@@ -76,7 +77,7 @@ export const MentionInput: React.FC<MentionInputProps> = ({
 
   // Handle key presses
   const handleKeyPress = (e: KeyboardEvent<HTMLTextAreaElement>) => {
-    console.log('🚀 MentionInput: Key pressed:', e.key, 'showMentions:', showMentions);
+    console.log('🚀 MentionInput: Key pressed:', e.key, 'showMentions:', showMentions, 'value:', value);
     
     if (showMentions) {
       if (e.key === 'ArrowDown') {
@@ -99,7 +100,8 @@ export const MentionInput: React.FC<MentionInputProps> = ({
       }
     } else if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      console.log('🚀 MentionInput: Enter key pressed, value:', value, 'disabled:', disabled);
+      console.log('🚀 MentionInput: Enter key pressed, calling handleSubmit');
+      console.log('🚀 MentionInput: Current state - value:', value, 'disabled:', disabled, 'onSend type:', typeof onSend);
       handleSubmit();
     }
   };
@@ -133,29 +135,30 @@ export const MentionInput: React.FC<MentionInputProps> = ({
 
   // Handle form submission
   const handleSubmit = () => {
-    console.log('🚀 MentionInput: handleSubmit called with:', {
-      value,
-      trimmed: value.trim(),
-      disabled,
-      onSendType: typeof onSend
-    });
+    console.log('🚀 MentionInput: handleSubmit called');
+    console.log('🚀 MentionInput: value:', value);
+    console.log('🚀 MentionInput: value.trim():', value.trim());
+    console.log('🚀 MentionInput: disabled:', disabled);
+    console.log('🚀 MentionInput: onSend type:', typeof onSend);
+    console.log('🚀 MentionInput: onSend function:', onSend);
     
     if (value.trim() && !disabled) {
-      console.log('🚀 MentionInput: Calling onSend with:', value);
+      console.log('🚀 MentionInput: Conditions met, calling onSend with value:', value);
       onSend(value);
       setShowEmojiPicker(false);
     } else {
-      console.log('🚀 MentionInput: Not sending - conditions not met');
+      console.log('🚀 MentionInput: Conditions NOT met - not sending');
+      console.log('🚀 MentionInput: Has trimmed value:', !!value.trim());
+      console.log('🚀 MentionInput: Not disabled:', !disabled);
     }
   };
 
   // Test button click
   const handleButtonClick = () => {
-    console.log('🚀 MentionInput: Send button clicked!', {
-      value,
-      disabled,
-      hasValue: !!value.trim()
-    });
+    console.log('🚀 MentionInput: Send button clicked!');
+    console.log('🚀 MentionInput: Button click - value:', value);
+    console.log('🚀 MentionInput: Button click - disabled:', disabled);
+    console.log('🚀 MentionInput: Button click - hasValue:', !!value.trim());
     handleSubmit();
   };
 
