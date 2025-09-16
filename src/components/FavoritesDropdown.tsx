@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Star, X } from 'lucide-react';
+import { Bookmark, X } from 'lucide-react';
 import { FavoriteMessage } from '../types';
 
 interface FavoritesDropdownProps {
@@ -59,16 +59,16 @@ export const FavoritesDropdown: React.FC<FavoritesDropdownProps> = ({
       <button
         onClick={() => setIsOpen(!isOpen)}
         disabled={favorites.length === 0}
-        className={`p-3 rounded-full transition-colors min-h-[48px] min-w-[48px] flex items-center justify-center touch-manipulation ${
+        className={`p-2 rounded-full transition-colors min-h-[40px] min-w-[40px] flex items-center justify-center touch-manipulation ${
           favorites.length === 0
             ? 'text-gray-600 cursor-not-allowed'
             : isOpen
-            ? 'bg-yellow-500/20 text-yellow-400'
+            ? 'bg-blue-500/20 text-blue-400'
             : 'hover:bg-gray-700 text-gray-400'
         }`}
-        title={favorites.length === 0 ? 'No favorite messages yet' : 'Favorite messages'}
+        title={favorites.length === 0 ? 'No saved prompts yet' : 'Saved prompts'}
       >
-        <Star className={`w-5 h-5 ${favorites.length > 0 && isOpen ? 'fill-current' : ''}`} />
+        <Bookmark className={`w-4 h-4 ${favorites.length > 0 && isOpen ? 'fill-current' : ''}`} />
       </button>
 
       {isOpen && favorites.length > 0 && (
@@ -98,13 +98,13 @@ export const FavoritesDropdown: React.FC<FavoritesDropdownProps> = ({
                   <button
                     onClick={(e) => handleRemoveFavorite(e, favorite.id)}
                     className="opacity-0 group-hover:opacity-100 p-1 hover:bg-red-500/20 rounded transition-all duration-200"
-                    title="Remove from favorites"
+                    title="Remove from saved prompts"
                   >
                     <X className="w-4 h-4 text-red-400" />
                   </button>
                 </div>
               </div>
-            ))}
+          <h3 className="text-white font-medium text-sm">Saved Prompts</h3>
           </div>
         </div>
       )}

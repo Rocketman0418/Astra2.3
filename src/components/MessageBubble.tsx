@@ -1,5 +1,5 @@
 import React from 'react';
-import { Star, Reply } from 'lucide-react';
+import { Bookmark, Reply } from 'lucide-react';
 import { VisualizationButton } from './VisualizationButton';
 import { Message } from '../types';
 
@@ -210,13 +210,13 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
               onClick={() => onToggleFavorite(message.id, message.text)}
               className={`flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 transform hover:scale-105 min-h-[44px] touch-manipulation ${
                 isFavorited
-                  ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30'
+                  ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
                   : 'bg-gray-700/50 text-gray-300 hover:bg-gray-600/50'
               }`}
-              title={isFavorited ? 'Remove from favorites' : 'Add to favorites'}
+              title={isFavorited ? 'Remove from saved prompts' : 'Save prompt'}
             >
-              <Star className={`w-4 h-4 ${isFavorited ? 'fill-current' : ''}`} />
-              <span>{isFavorited ? 'Favorited' : 'Add to Favorites'}</span>
+              <Bookmark className={`w-4 h-4 ${isFavorited ? 'fill-current' : ''}`} />
+              <span>{isFavorited ? 'Saved' : 'Save Prompt'}</span>
             </button>
           </div>
         )}
