@@ -87,15 +87,18 @@ const formatMessageContent = (content: string, mentions: string[], isAstraMessag
 
   let formattedContent = content;
   mentions.forEach(mention => {
-    // Convert mention to proper case (capitalize each word)
-    const properCaseMention = mention.split(' ').map(word => 
-      word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
-    ).join(' ');
+    // Convert mention to proper case (capitalize each word) - handle full names
+    const properCaseMention = mention
+      .toLowerCase()
+      .split(' ')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
     
-    const mentionRegex = new RegExp(`@${mention}`, 'gi');
+    // Create a more flexible regex that matches the mention regardless of case or spacing
+    const mentionRegex = new RegExp(`@${mention.replace(/\s+/g, '\\s*')}`, 'gi');
     formattedContent = formattedContent.replace(
       mentionRegex,
-      `<span class="bg-gradient-to-r from-blue-500/30 to-purple-500/30 text-white font-bold px-2 py-1 rounded-md border border-blue-400/30 shadow-sm">@${properCaseMention}</span>`
+      `<span class="bg-gradient-to-r from-blue-500 to-purple-600 text-white font-bold px-2 py-1 rounded-md shadow-lg border border-blue-400/50">@${properCaseMention}</span>`
     );
   });
 
