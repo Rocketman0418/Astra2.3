@@ -59,7 +59,7 @@ export const FavoritesDropdown: React.FC<FavoritesDropdownProps> = ({
       <button
         onClick={() => setIsOpen(!isOpen)}
         disabled={favorites.length === 0}
-        className={`p-3 rounded-full transition-colors min-h-[48px] min-w-[48px] flex items-center justify-center touch-manipulation ${
+        className={`p-2 rounded-full transition-colors min-h-[40px] min-w-[40px] flex items-center justify-center touch-manipulation ${
           favorites.length === 0
             ? 'text-gray-600 cursor-not-allowed'
             : isOpen
@@ -68,13 +68,13 @@ export const FavoritesDropdown: React.FC<FavoritesDropdownProps> = ({
         }`}
         title={favorites.length === 0 ? 'No saved prompts yet' : 'Saved prompts'}
       >
-        <Bookmark className={`w-5 h-5 ${favorites.length > 0 && isOpen ? 'fill-current' : ''}`} />
+        <Bookmark className={`w-4 h-4 ${favorites.length > 0 && isOpen ? 'fill-current' : ''}`} />
       </button>
 
       {isOpen && favorites.length > 0 && (
         <div className="absolute bottom-full left-0 mb-2 w-80 bg-gray-800 border border-gray-600 rounded-lg shadow-lg max-h-64 overflow-y-auto z-50">
           <div className="p-3 border-b border-gray-700">
-            <h3 className="text-white font-medium text-sm">Favorite Messages</h3>
+            <h3 className="text-white font-medium text-sm">Saved Prompts</h3>
             <p className="text-gray-400 text-xs">Click to reuse a question</p>
           </div>
           
@@ -98,16 +98,16 @@ export const FavoritesDropdown: React.FC<FavoritesDropdownProps> = ({
                   <button
                     onClick={(e) => handleRemoveFavorite(e, favorite.id)}
                     className="opacity-0 group-hover:opacity-100 p-1 hover:bg-red-500/20 rounded transition-all duration-200"
-                    title="Remove from favorites"
+                    title="Remove from saved prompts"
                   >
                     <X className="w-4 h-4 text-red-400" />
                   </button>
                 </div>
               </div>
-        )
-        )
-        }
-      )
-      }
-  )
-}
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
