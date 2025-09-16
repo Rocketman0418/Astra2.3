@@ -32,6 +32,7 @@ export const useChats = () => {
   const [error, setError] = useState<string | null>(null);
   const [userProfile, setUserProfile] = useState<{ name: string | null } | null>(null);
   const [hasInitialized, setHasInitialized] = useState(false);
+  const [visualizationStates, setVisualizationStates] = useState<Record<string, any>>({});
 
   // Fetch user profile data from public.users table
   const fetchUserProfile = useCallback(async () => {
@@ -333,6 +334,55 @@ export const useChats = () => {
     }
   }, [user]);
 
+  // Get visualization state for a message
+  const getVisualizationState = useCallback((messageId: string) => {
+    return visualizationStates[messageId] || null;
+  }, [visualizationStates]);
+
+  // Update visualization state
+  const updateVisualizationState = useCallback((messageId: string, state: any) => {
+    console.log('🔧 useChats: Updating visualization state for messageId:', messageId, 'state:', state);
+    setVisualizationStates(prev => ({
+      ...prev,
+      [messageId]: state
+    }));
+  }, []);
+
+  // Update visualization data in database
+  const updateVisualizationData = useCallback(async (messageId: string, visualizationData: string) => {
+    if (!user) return;
+
+    try {
+      const { error } = await supabase
+        .from('astra_chats')
+        .update({ 
+          visualization_data: visualizationData,
+          visualization: true 
+        })
+        .eq('id', messageId)
+        .eq('user_id', user.id);
+
+      if (error) {
+        console.error('Error updating visualization data:', error);
+        return;
+      }
+
+      console.log('✅ Updated visualization data for message:', messageId);
+      
+      // Update local state to reflect database change
+      setVisualizationStates(prev => ({
+        ...prev,
+        [messageId]: {
+          ...prev[messageId],
+          content: visualizationData,
+          hasVisualization: true,
+          isGenerating: false
+        }
+      }));
+    } catch (err) {
+      console.error('Error in updateVisualizationData:', err);
+    }
+  }, [user]);
   // Initialize conversations when user logs in
   useEffect(() => {
     if (user) {
@@ -354,6 +404,9 @@ export const useChats = () => {
     createNewConversation,
     startNewConversation,
     updateVisualizationStatus,
+    getVisualizationState,
+    updateVisualizationState,
+    updateVisualizationData,
     setError,
     hasInitialized,
   };

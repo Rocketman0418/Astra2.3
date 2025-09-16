@@ -8,10 +8,9 @@ import { v4 as uuidv4 } from 'uuid';
 const WEBHOOK_URL = import.meta.env.VITE_N8N_WEBHOOK_URL;
 
 export const useChat = () => {
-  const { logChatMessage, currentMessages, currentConversationId, loading: chatsLoading, loadConversation, startNewConversation: chatsStartNewConversation, updateVisualizationStatus, conversations, hasInitialized } = useChats();
+  const { logChatMessage, currentMessages, currentConversationId, loading: chatsLoading, loadConversation, startNewConversation: chatsStartNewConversation, updateVisualizationStatus, conversations, hasInitialized, getVisualizationState, updateVisualizationState, updateVisualizationData } = useChats();
   const { user } = useAuth();
   const [userProfile, setUserProfile] = useState<{ name: string | null } | null>(null);
-  const [visualizationStates, setVisualizationStates] = useState<Record<string, any>>({});
   const [messages, setMessages] = useState<Message[]>([
     {
       id: 'welcome',
@@ -470,19 +469,6 @@ export const useChat = () => {
     return newConversationId;
   }, [chatsStartNewConversation]);
 
-  // Get visualization state for a message
-  const getVisualizationState = useCallback((messageId: string) => {
-    return visualizationStates[messageId] || null;
-  }, [visualizationStates]);
-
-  // Update visualization state
-  const updateVisualizationState = useCallback((messageId: string, state: any) => {
-    setVisualizationStates(prev => ({
-      ...prev,
-      [messageId]: state
-    }));
-  }, []);
-
   return {
     messages,
     isLoading,
@@ -496,8 +482,9 @@ export const useChat = () => {
     updateVisualizationStatus,
     loadConversation,
     startNewConversation,
-    getVisualizationState,
-    updateVisualizationState,
+    getVisualizationState: getVisualizationState,
+    updateVisualizationState: updateVisualizationState,
+    updateVisualizationData,
     replyState,
     startReply,
     cancelReply

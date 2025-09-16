@@ -121,6 +121,7 @@ Return only the HTML code - no other text or formatting.`;
       } catch (dbError) {
         console.error('❌ Database error while saving visualization:', dbError);
       }
+      
       setVisualizations(prev => ({
         ...prev,
         [messageId]: {

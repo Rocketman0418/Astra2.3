@@ -26,7 +26,6 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({
 }) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [isCreatingVisualization, setIsCreatingVisualization] = useState(false);
-  const [visualizationStates, setVisualizationStates] = useState<Record<string, any>>({});
   const {
     messages,
     isLoading,
@@ -39,7 +38,8 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({
     currentConversationId,
     updateVisualizationStatus,
     getVisualizationState,
-    updateVisualizationState: hookUpdateVisualizationState,
+    updateVisualizationState,
+    updateVisualizationData,
     replyState,
     startReply,
     cancelReply
@@ -63,18 +63,9 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({
     clearHighlight
   } = useVisualization(updateVisualizationStatus);
 
-  // Local visualization state management
-  const updateVisualizationState = useCallback((messageId: string, state: any) => {
-    console.log('🔧 ChatContainer: Updating visualization state for messageId:', messageId, 'state:', state);
-    setVisualizationStates(prev => ({
-      ...prev,
-      [messageId]: state
-    }));
-  }, []);
-
   // Get visualization state - check local state first, then hook state
   const getLocalVisualizationState = useCallback((messageId: string) => {
-    const localState = visualizationStates[messageId];
+    const localState = getVisualizationState(messageId);
     console.log('🔍 ChatContainer: Getting visualization state for messageId:', messageId, 'localState:', localState);
     
     // Find the message to check for stored visualization
@@ -102,7 +93,7 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({
     
     console.log('🔍 ChatContainer: No visualization state found for messageId:', messageId);
     return null;
-  }, [visualizationStates, messages]);
+  }, [getVisualizationState, messages]);
 
   // Register service worker for PWA
   // Handle conversation loading from sidebar
