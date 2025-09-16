@@ -80,25 +80,14 @@ const formatMessageContent = (content: string, mentions: string[], isAstraMessag
     return <div>{elements}</div>;
   }
 
-  // Handle mentions for user messages - simple approach
-  let formattedContent = content;
-  
-  // Find all @mentions in the content and style them
-  const mentionRegex = /@([a-zA-Z]+(?:\s+[a-zA-Z]+)*)/g;
-  formattedContent = formattedContent.replace(mentionRegex, (match) => {
-    // Convert to proper case
-    const properCaseMatch = match.split(' ').map(word => 
-      word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
-    ).join(' ');
-    
+  // Just return the content as-is for user messages
     return `<span class="bg-gradient-to-r from-blue-500 to-purple-600 text-white font-bold px-2 py-1 rounded-md shadow-lg border border-blue-400/50">${properCaseMatch}</span>`;
   });
   
   return (
-    <span 
-      className="text-gray-300"
-      dangerouslySetInnerHTML={{ __html: formattedContent }}
-    />
+    <span className="text-gray-300">
+      {content}
+    </span>
   );
 };
 
