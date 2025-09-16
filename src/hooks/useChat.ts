@@ -229,13 +229,12 @@ export const useChat = () => {
       
       console.log('🌐 Sending request to webhook:', WEBHOOK_URL);
       console.log('📤 Request payload:', { 
-        chatInput: text.trim(), // Send original text to webhook, not the formatted version
+        chatInput: messageToSend, // Send formatted message with @reply prefix if replying
         user_id: userId,
         user_email: userEmail,
         user_name: userName,
         conversation_id: currentConversationId,
-        mode: 'private',
-        reply_to_id: replyState.isReplying ? replyState.messageId : undefined
+        mode: 'private'
       });
       
       const response = await fetch(WEBHOOK_URL, {
@@ -244,13 +243,12 @@ export const useChat = () => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          chatInput: text.trim(), // Send original text to webhook
+          chatInput: messageToSend, // Send formatted message with @reply prefix if replying
           user_id: userId,
           user_email: userEmail,
           user_name: userName,
           conversation_id: currentConversationId,
-          mode: 'private',
-          reply_to_id: replyState.isReplying ? replyState.messageId : undefined
+          mode: 'private'
         })
       });
       const requestEndTime = Date.now();
