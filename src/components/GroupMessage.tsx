@@ -87,7 +87,14 @@ const formatMessageContent = (content: string, mentions: string[], isAstraMessag
   const formattedParts = parts.map((part, index) => {
     // Every odd index is a captured mention name
     if (index % 2 === 1) {
-      return <strong key={index} className="font-bold">@{part}</strong>;
+      return (
+        <span 
+          key={index} 
+          className="bg-gradient-to-r from-blue-500 to-purple-600 text-white font-bold px-2 py-1 rounded-md shadow-lg border border-blue-400/50 inline-block"
+        >
+          @{part}
+        </span>
+      );
     }
     return part;
   });
