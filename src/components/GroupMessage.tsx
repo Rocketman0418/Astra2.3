@@ -80,10 +80,21 @@ const formatMessageContent = (content: string, mentions: string[], isAstraMessag
     return <div>{elements}</div>;
   }
 
-  // Just return the content as-is for user messages
+  // Format user messages with bold @mentions
+  const mentionRegex = /@([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)/g;
+  const parts = content.split(mentionRegex);
+  
+  const formattedParts = parts.map((part, index) => {
+    // Every odd index is a captured mention name
+    if (index % 2 === 1) {
+      return <strong key={index} className="font-bold">@{part}</strong>;
+    }
+    return part;
+  });
+  
   return (
     <span className="text-gray-300">
-      {content}
+      {formattedParts}
     </span>
   );
 };
