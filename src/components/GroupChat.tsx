@@ -46,6 +46,8 @@ export const GroupChat: React.FC<GroupChatProps> = ({ showTeamMenu = false, onCl
   const [isCreatingVisualization, setIsCreatingVisualization] = useState(false);
   const [showMembersModal, setShowMembersModal] = useState(false);
   const [isCurrentUserAdmin, setIsCurrentUserAdmin] = useState(false);
+  const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
+  const [lastMessageCount, setLastMessageCount] = useState(0);
 
   // Get user's display name
   const getUserName = useCallback(async (): Promise<string> => {
@@ -87,6 +89,40 @@ export const GroupChat: React.FC<GroupChatProps> = ({ showTeamMenu = false, onCl
     messageToHighlight,
     clearHighlight
   } = useVisualization();
+
+  // Check if user is near bottom of chat
+  const isNearBottom = useCallback(() => {
+    const scrollContainer = document.querySelector('.chat-messages-container');
+    if (!scrollContainer) return true;
+    
+    const { scrollTop, scrollHeight, clientHeight } = scrollContainer;
+    const distanceFromBottom = scrollHeight - scrollTop - clientHeight;
+    return distanceFromBottom < 100; // Within 100px of bottom
+  }, []);
+
+  // Handle scroll events to determine if we should auto-scroll
+  useEffect(() => {
+    const scrollContainer = document.querySelector('.chat-messages-container');
+    if (!scrollContainer) return;
+
+    const handleScroll = () => {
+      setShouldAutoScroll(isNearBottom());
+    };
+
+    scrollContainer.addEventListener('scroll', handleScroll);
+    return () => scrollContainer.removeEventListener('scroll', handleScroll);
+  }, [isNearBottom]);
+
+  // Track message count changes
+  useEffect(() => {
+    if (messages.length > lastMessageCount && shouldAutoScroll) {
+      // Only scroll if user is near bottom and we have new messages
+      setTimeout(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+      }, 100);
+    }
+    setLastMessageCount(messages.length);
+  }, [messages.length, lastMessageCount, shouldAutoScroll]);
 
   // Handle search functionality
   const handleSearch = useCallback(async (query: string) => {
@@ -407,18 +443,19 @@ ${finalSummary}
 
   // Auto-scroll to bottom
   useEffect(() => {
-    // Only auto-scroll to bottom if we're not highlighting a specific message
-    if (!messageToHighlight && !isCreatingVisualization) {
+    // Only auto-scroll if user is near bottom, not highlighting a message, and not creating visualization
+    if (!messageToHighlight && !isCreatingVisualization && shouldAutoScroll) {
       setTimeout(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
       }, 100);
     }
-  }, [messages, isAstraThinking, visualizationStates, messageToHighlight, isCreatingVisualization]);
+  }, [isAstraThinking, visualizationStates, messageToHighlight, isCreatingVisualization, shouldAutoScroll]);
 
   // Also scroll to bottom when component mounts
   useEffect(() => {
     setTimeout(() => {
       messagesEndRef.current?.scrollIntoView({ behavior: 'auto' });
+      setShouldAutoScroll(true); // Start with auto-scroll enabled
     }, 200);
   }, []);
 
