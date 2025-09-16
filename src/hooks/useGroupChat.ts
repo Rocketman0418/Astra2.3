@@ -20,13 +20,15 @@ export const useGroupChat = () => {
 
   // Parse @mentions from message content
   const parseMentions = useCallback((message: string): string[] => {
-    // Match both properly capitalized mentions from dropdown AND manually typed mentions
-    const mentionRegex = /@([A-Za-z]+(?:\s+[A-Za-z]+)*)/g;
+    // Simple mention parsing - just look for @word patterns
+    const mentionRegex = /@(\w+)/g;
     const mentions: string[] = [];
     let match;
     while ((match = mentionRegex.exec(message)) !== null) {
       mentions.push(match[1]);
     }
+    console.log('🔍 parseMentions: Input message:', message);
+    console.log('🔍 parseMentions: Found mentions:', mentions);
     return mentions;
   }, []);
 
