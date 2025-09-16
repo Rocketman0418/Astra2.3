@@ -273,6 +273,8 @@ export const useGroupChat = () => {
       console.error('Error in sendMessage:', err);
       setError('Failed to send message');
     }
+  }
+  )
 
   // Search messages
   const searchMessages = useCallback(async (query: string): Promise<GroupMessage[]> => {
