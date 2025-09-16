@@ -84,8 +84,8 @@ export const ChatInput: React.FC<ChatInputProps> = ({
             onKeyPress={handleKeyPress}
             placeholder="Send a message to Astra....."
             disabled={disabled}
-            className="w-full resize-none rounded-2xl border border-gray-600 bg-gray-800 text-white px-3 py-2 md:px-4 md:py-3 pr-12 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none disabled:bg-gray-700 disabled:cursor-not-allowed max-h-32 min-h-[40px] md:min-h-[48px] text-sm md:text-base leading-relaxed placeholder-gray-400"
-            rows={1}
+            className="w-full resize-none rounded-2xl border border-gray-600 bg-gray-800 text-white px-3 py-2 md:px-4 md:py-3 pr-12 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none disabled:bg-gray-700 disabled:cursor-not-allowed max-h-32 min-h-[72px] md:min-h-[72px] text-sm md:text-base leading-relaxed placeholder-gray-400"
+            rows={3}
             style={{ 
               scrollbarWidth: 'thin',
               scrollbarColor: '#3b82f6 #374151'
@@ -96,7 +96,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
         <button
           onClick={handleSubmit}
           disabled={disabled || !value.trim()}
-          className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 disabled:from-gray-600 disabled:to-gray-700 text-white rounded-full p-2 md:p-3 transition-all duration-200 transform hover:scale-105 disabled:scale-100 disabled:cursor-not-allowed min-h-[40px] min-w-[40px] md:min-h-[48px] md:min-w-[48px] flex items-center justify-center touch-manipulation"
+          className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 disabled:from-gray-600 disabled:to-gray-700 text-white rounded-full p-2 md:p-3 transition-all duration-200 transform hover:scale-105 disabled:scale-100 disabled:cursor-not-allowed min-h-[72px] min-w-[40px] md:min-h-[72px] md:min-w-[48px] flex items-center justify-center touch-manipulation self-end"
         >
           <Send className="w-4 h-4 md:w-5 md:h-5" />
         </button>
