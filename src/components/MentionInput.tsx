@@ -33,12 +33,6 @@ export const MentionInput: React.FC<MentionInputProps> = ({
   const mentionsRef = useRef<HTMLDivElement>(null);
   const emojiPickerRef = useRef<HTMLDivElement>(null);
 
-  // Debug: Check if onSend prop is received
-  useEffect(() => {
-    console.log('🔧 MentionInput: Component mounted, onSend type:', typeof onSend);
-    console.log('🔧 MentionInput: onSend function:', onSend);
-  }, [onSend]);
-
   // Add Astra to the users list
   const allUsers = [
     { id: 'astra', name: 'Astra', email: 'astra@rockethub.ai' },
@@ -150,8 +144,6 @@ export const MentionInput: React.FC<MentionInputProps> = ({
   // Handle button click
   const handleButtonClick = () => {
     console.log('🚀 MentionInput: Send button clicked!');
-    console.log('🚀 MentionInput: Current value:', value);
-    console.log('🚀 MentionInput: Button disabled:', disabled);
     handleSubmit();
   };
 
