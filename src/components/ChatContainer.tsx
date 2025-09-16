@@ -212,7 +212,7 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({
     }
     
     console.log('❌ Private chat: No visualization data found for message:', messageId);
-  }, [messages, visualizationStates, getHookVisualization, setVisualizationContent, showVisualization]);
+  }, [messages, getLocalVisualizationState, getHookVisualization, setVisualizationContent, showVisualization]);
 
   useEffect(() => {
     // Initial scroll to bottom on component mount
