@@ -350,7 +350,6 @@ export const GroupMessage: React.FC<GroupMessageProps> = ({
             <div className="text-xs opacity-70 mt-2">
               {formatTime(message.created_at)}
             </div>
-          </div>
           )}
         </div>
       </div>
