@@ -74,6 +74,24 @@ export const MentionInput: React.FC<MentionInputProps> = ({
     }
   };
 
+  // Handle form submission
+  const handleSubmit = () => {
+    console.log('🚀 MentionInput: handleSubmit called with:', {
+      value,
+      trimmed: value.trim(),
+      disabled,
+      onSendType: typeof onSend
+    });
+    
+    if (value.trim() && !disabled) {
+      console.log('🚀 MentionInput: Calling onSend with:', value);
+      onSend(value);
+      setShowEmojiPicker(false);
+    } else {
+      console.log('🚀 MentionInput: Not sending - conditions not met');
+    }
+  };
+
   // Handle key presses
   const handleKeyPress = (e: KeyboardEvent<HTMLTextAreaElement>) => {
     console.log('🚀 MentionInput: Key pressed:', e.key, 'showMentions:', showMentions);
@@ -99,7 +117,7 @@ export const MentionInput: React.FC<MentionInputProps> = ({
       }
     } else if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      console.log('🚀 MentionInput: Enter key pressed, value:', value, 'disabled:', disabled);
+      console.log('🚀 MentionInput: Enter key pressed, calling handleSubmit');
       handleSubmit();
     }
   };
@@ -131,31 +149,11 @@ export const MentionInput: React.FC<MentionInputProps> = ({
     }
   };
 
-  // Handle form submission
-  const handleSubmit = () => {
-    console.log('🚀 MentionInput: handleSubmit called with:', {
-      value,
-      trimmed: value.trim(),
-      disabled,
-      onSendType: typeof onSend
-    });
-    
-    if (value.trim() && !disabled) {
-      console.log('🚀 MentionInput: Calling onSend with:', value);
-      onSend(value);
-      setShowEmojiPicker(false);
-    } else {
-      console.log('🚀 MentionInput: Not sending - conditions not met');
-    }
-  };
-
-  // Test button click
+  // Handle button click
   const handleButtonClick = () => {
-    console.log('🚀 MentionInput: Send button clicked!', {
-      value,
-      disabled,
-      hasValue: !!value.trim()
-    });
+    console.log('🚀 MentionInput: Send button clicked!');
+    console.log('🚀 MentionInput: Current value:', value);
+    console.log('🚀 MentionInput: Button disabled:', disabled);
     handleSubmit();
   };
 
