@@ -120,8 +120,10 @@ export const useGroupChat = () => {
     }
 
     const mentions = parseMentions(content);
+    console.log('🔍 Team Chat: Parsed mentions from content:', content, 'mentions:', mentions);
     const userName = await getUserName();
     const isAstraMention = mentions.some(mention => mention.toLowerCase() === 'astra');
+    console.log('🔍 Team Chat: isAstraMention:', isAstraMention, 'userName:', userName);
 
     try {
       // Log user message to astra_chats
@@ -142,14 +144,19 @@ export const useGroupChat = () => {
         undefined, // astraPrompt
         undefined // visualizationData
       );
+      
+      console.log('✅ Team Chat: User message logged with ID:', userMessageId);
 
       // If @astra was mentioned, get AI response
       if (isAstraMention) {
+        console.log('🤖 Team Chat: Astra mentioned, setting thinking state and calling webhook');
         setIsAstraThinking(true);
         
         try {
           // Extract the prompt after @astra
-          const astraPrompt = content.replace(/@astra\s*/i, '').trim();
+          const astraPrompt = content.replace(/@astra\s*/gi, '').trim();
+          console.log('🤖 Team Chat: Extracted astra prompt:', astraPrompt);
+          console.log('🌐 Team Chat: Calling webhook URL:', WEBHOOK_URL);
           
           const response = await fetch(WEBHOOK_URL, {
             method: 'POST',
@@ -168,12 +175,17 @@ export const useGroupChat = () => {
             })
           });
 
+          console.log('📥 Team Chat: Webhook response status:', response.status);
+          
           const requestStartTime = Date.now();
           if (!response.ok) {
+            const errorText = await response.text();
+            console.error('❌ Team Chat: Webhook failed:', response.status, errorText);
             throw new Error('Failed to get Astra response');
           }
 
           const responseText = await response.text();
+          console.log('📄 Team Chat: Webhook response text length:', responseText.length);
           const requestEndTime = Date.now();
           const responseTimeMs = requestEndTime - requestStartTime;
           let astraResponse = responseText;
@@ -186,8 +198,11 @@ export const useGroupChat = () => {
             }
           } catch (e) {
             // Use raw text if not JSON
+            console.log('📄 Team Chat: Response is not JSON, using raw text');
           }
 
+          console.log('✅ Team Chat: Astra response received, logging to database');
+          
           // Log Astra's response to astra_chats table
           const astraMessageId = await logChatMessage(
             astraResponse,
@@ -208,6 +223,8 @@ export const useGroupChat = () => {
             astraPrompt, // astraPrompt
             undefined // visualizationData
           );
+          
+          console.log('✅ Team Chat: Astra response logged with ID:', astraMessageId);
         } catch (err) {
           console.error('Error getting Astra response:', err);
           
