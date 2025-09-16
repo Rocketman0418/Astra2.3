@@ -245,8 +245,12 @@ export const useGroupChat = () => {
         }
       }
       
-      // Refresh messages from database to show the new entries
-      await fetchMessages();
+      // Force refresh messages from database to show the new entries
+      console.log('🔄 Team Chat: Refreshing messages after send...');
+      setTimeout(async () => {
+        await fetchMessages();
+        console.log('✅ Team Chat: Messages refreshed');
+      }, 500); // Small delay to ensure database writes are complete
     } catch (err) {
       console.error('Error in sendMessage:', err);
       setError('Failed to send message');
