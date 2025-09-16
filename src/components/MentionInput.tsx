@@ -33,6 +33,12 @@ export const MentionInput: React.FC<MentionInputProps> = ({
   const mentionsRef = useRef<HTMLDivElement>(null);
   const emojiPickerRef = useRef<HTMLDivElement>(null);
 
+  // Debug: Check if onSend prop is received
+  useEffect(() => {
+    console.log('🔧 MentionInput: Component mounted, onSend type:', typeof onSend);
+    console.log('🔧 MentionInput: onSend function:', onSend);
+  }, [onSend]);
+
   // Add Astra to the users list
   const allUsers = [
     { id: 'astra', name: 'Astra', email: 'astra@rockethub.ai' },
@@ -69,6 +75,7 @@ export const MentionInput: React.FC<MentionInputProps> = ({
 
   // Handle key presses
   const handleKeyPress = (e: KeyboardEvent<HTMLTextAreaElement>) => {
+    console.log('🚀 MentionInput: Key pressed:', e.key);
     console.log('🚀 MentionInput: Key pressed:', e.key, 'showMentions:', showMentions);
     
     if (showMentions) {
@@ -126,6 +133,7 @@ export const MentionInput: React.FC<MentionInputProps> = ({
 
   // Handle form submission
   const handleSubmit = () => {
+    console.log('🚀 MentionInput: handleSubmit called');
     console.log('🚀 MentionInput: handleSubmit called with value:', value);
     console.log('🚀 MentionInput: value.trim():', value.trim());
     console.log('🚀 MentionInput: disabled:', disabled);
@@ -323,13 +331,9 @@ export const MentionInput: React.FC<MentionInputProps> = ({
           )}
           
           <button
+            onClick={handleSubmit}
             disabled={disabled || !value.trim()}
             className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 disabled:from-gray-600 disabled:to-gray-700 text-white rounded-full p-3 transition-all duration-200 transform hover:scale-105 disabled:scale-100 disabled:cursor-not-allowed min-h-[72px] min-w-[48px] flex items-center justify-center touch-manipulation self-end"
-            onClick={(e) => {
-              console.log('🚀 MentionInput: Send button clicked');
-              e.preventDefault();
-              handleSubmit();
-            }}
           >
             <Send className="w-5 h-5" />
           </button>
