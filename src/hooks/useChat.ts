@@ -229,7 +229,7 @@ export const useChat = () => {
       
       console.log('🌐 Sending request to webhook:', WEBHOOK_URL);
       console.log('📤 Request payload:', { 
-        chatInput: messageToSend, // Send formatted message with @reply prefix if replying
+        chatInput: messageToSend,
         user_id: userId,
         user_email: userEmail,
         user_name: userName,
@@ -243,7 +243,7 @@ export const useChat = () => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          chatInput: messageToSend, // Send formatted message with @reply prefix if replying
+          chatInput: messageToSend,
           user_id: userId,
           user_email: userEmail,
           user_name: userName,
