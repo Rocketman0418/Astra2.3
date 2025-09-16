@@ -357,7 +357,5 @@ export const MentionInput: React.FC<MentionInputProps> = ({
         </div>
       </div>
     </div>
-      </div>
-    </div>
   );
 };
