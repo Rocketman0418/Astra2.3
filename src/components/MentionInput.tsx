@@ -33,6 +33,12 @@ export const MentionInput: React.FC<MentionInputProps> = ({
   const mentionsRef = useRef<HTMLDivElement>(null);
   const emojiPickerRef = useRef<HTMLDivElement>(null);
 
+  // Debug: Check if onSend prop is received
+  useEffect(() => {
+    console.log('🔧 MentionInput: Component mounted, onSend type:', typeof onSend);
+    console.log('🔧 MentionInput: onSend function:', onSend);
+  }, [onSend]);
+
   // Add Astra to the users list
   const allUsers = [
     { id: 'astra', name: 'Astra', email: 'astra@rockethub.ai' },
@@ -68,22 +74,6 @@ export const MentionInput: React.FC<MentionInputProps> = ({
     }
   };
 
-  // Handle form submission
-  const handleSubmit = () => {
-    console.log('🚀 MentionInput: handleSubmit called');
-    console.log('🚀 MentionInput: Current value:', value);
-    console.log('🚀 MentionInput: Value trimmed:', value.trim());
-    console.log('🚀 MentionInput: Disabled:', disabled);
-    
-    if (value.trim() && !disabled) {
-      console.log('🚀 MentionInput: Calling onSend with:', value);
-      onSend(value);
-      setShowEmojiPicker(false);
-    } else {
-      console.log('🚀 MentionInput: Not sending - conditions not met');
-    }
-  };
-
   // Handle key presses
   const handleKeyPress = (e: KeyboardEvent<HTMLTextAreaElement>) => {
     console.log('🚀 MentionInput: Key pressed:', e.key, 'showMentions:', showMentions);
@@ -109,7 +99,7 @@ export const MentionInput: React.FC<MentionInputProps> = ({
       }
     } else if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      console.log('🚀 MentionInput: Enter key pressed, calling handleSubmit');
+      console.log('🚀 MentionInput: Enter key pressed, value:', value, 'disabled:', disabled);
       handleSubmit();
     }
   };
@@ -141,14 +131,37 @@ export const MentionInput: React.FC<MentionInputProps> = ({
     }
   };
 
-  // Handle button click
+  // Handle form submission
+  const handleSubmit = () => {
+    console.log('🚀 MentionInput: handleSubmit called with:', {
+      value,
+      trimmed: value.trim(),
+      disabled,
+      onSendType: typeof onSend
+    });
+    
+    if (value.trim() && !disabled) {
+      console.log('🚀 MentionInput: Calling onSend with:', value);
+      onSend(value);
+      setShowEmojiPicker(false);
+    } else {
+      console.log('🚀 MentionInput: Not sending - conditions not met');
+    }
+  };
+
+  // Test button click
   const handleButtonClick = () => {
-    console.log('🚀 MentionInput: Send button clicked!');
+    console.log('🚀 MentionInput: Send button clicked!', {
+      value,
+      disabled,
+      hasValue: !!value.trim()
+    });
     handleSubmit();
   };
 
   // Common emojis for quick access
   const commonEmojis = [
+    // Faces & Expressions
     '😀', '😃', '😄', '😁', '😆', '😅', '🤣', '😂', '🙂', '🙃',
     '😉', '😊', '😇', '🥰', '😍', '🤩', '😘', '😗', '😚', '😙',
     '😋', '😛', '😜', '🤪', '😝', '🤑', '🤗', '🤭', '🤫', '🤔',
@@ -156,24 +169,42 @@ export const MentionInput: React.FC<MentionInputProps> = ({
     '😎', '🤓', '🧐', '😕', '😟', '🙁', '☹️', '😮', '😯', '😲',
     '😳', '🥺', '😦', '😧', '😨', '😰', '😥', '😢', '😭', '😱',
     '😖', '😣', '😞', '😓', '😩', '😫', '🥱', '😴', '😪', '😵',
+    
+    // Cool & Fun
     '😎', '🤠', '🥳', '🤡', '🤖', '👻', '💀', '☠️', '👽', '👾',
     '🎭', '🎪', '🎨', '🎬', '🎤', '🎧', '🎵', '🎶', '🎸', '🥁',
+    
+    // Hands & Gestures
     '👍', '👎', '👌', '✌️', '🤞', '🤟', '🤘', '🤙', '👈', '👉',
     '👆', '👇', '☝️', '👋', '🤚', '🖐️', '✋', '🖖', '👏', '🙌',
     '🤲', '🤝', '🙏', '✍️', '💪', '🦾', '🦿', '🦵', '🦶', '💅',
+    
+    // Hearts & Love
     '❤️', '🧡', '💛', '💚', '💙', '💜', '🖤', '🤍', '🤎', '💔',
     '❣️', '💕', '💞', '💓', '💗', '💖', '💘', '💝', '💟', '☮️',
+    
+    // Symbols & Effects
     '✨', '🎉', '🎊', '🔥', '💯', '⭐', '🌟', '💫', '⚡', '💥',
     '💢', '💨', '💦', '💤', '🕳️', '💣', '💡', '🔔', '🔕', '📢',
+    
+    // Transportation & Space
     '🚀', '🛸', '✈️', '🚁', '🚂', '🚗', '🏎️', '🚓', '🚑', '🚒',
     '🚐', '🛻', '🚚', '🚛', '🚜', '🏍️', '🛵', '🚲', '🛴', '🛹',
+    
+    // Nature & Weather
     '🌈', '☀️', '🌤️', '⛅', '🌦️', '🌧️', '⛈️', '🌩️', '🌨️', '❄️',
     '☃️', '⛄', '🌬️', '💨', '🌪️', '🌊', '💧', '☔', '⚡', '🔥',
+    
+    // Food & Drinks
     '🍕', '🍔', '🌭', '🥪', '🌮', '🌯', '🥙', '🧆', '🥚', '🍳',
     '🥞', '🧇', '🥓', '🥩', '🍗', '🍖', '🦴', '🌭', '🍟', '🍿',
     '☕', '🍵', '🧃', '🥤', '🍶', '🍺', '🍻', '🥂', '🍷', '🥃',
+    
+    // Activities & Sports
     '⚽', '🏀', '🏈', '⚾', '🥎', '🎾', '🏐', '🏉', '🥏', '🎱',
     '🏓', '🏸', '🏒', '🏑', '🥍', '🏏', '🪃', '🥅', '⛳', '🪁',
+    
+    // Objects & Tools
     '💻', '🖥️', '🖨️', '⌨️', '🖱️', '🖲️', '💽', '💾', '💿', '📀',
     '📱', '☎️', '📞', '📟', '📠', '📺', '📻', '🎙️', '🎚️', '🎛️'
   ];
@@ -215,6 +246,7 @@ export const MentionInput: React.FC<MentionInputProps> = ({
         setShowMentions(false);
       }
       if (emojiPickerRef.current && !emojiPickerRef.current.contains(event.target as Node)) {
+        // Only close emoji picker if clicking outside AND not on the emoji button
         const target = event.target as Element;
         const isEmojiButton = target.closest('button')?.querySelector('svg')?.classList.contains('lucide-smile');
         if (!isEmojiButton) {
