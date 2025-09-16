@@ -115,11 +115,17 @@ export const GroupChat: React.FC<GroupChatProps> = ({ showTeamMenu = false, onCl
 
   // Track message count changes
   useEffect(() => {
-    if (messages.length > lastMessageCount && shouldAutoScroll) {
-      // Only scroll if user is near bottom and we have new messages
-      setTimeout(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-      }, 100);
+    // Only auto-scroll for new messages if user is at bottom and it's a real increase
+    if (messages.length > lastMessageCount) {
+      const scrollContainer = document.querySelector('.chat-messages-container');
+      if (scrollContainer && shouldAutoScroll) {
+        const isAtBottom = scrollContainer.scrollTop + scrollContainer.clientHeight >= scrollContainer.scrollHeight - 50;
+        if (isAtBottom) {
+          setTimeout(() => {
+            messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+          }, 50);
+        }
+      }
     }
     setLastMessageCount(messages.length);
   }, [messages.length, lastMessageCount, shouldAutoScroll]);

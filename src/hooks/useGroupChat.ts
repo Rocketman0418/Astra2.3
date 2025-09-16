@@ -55,6 +55,11 @@ export const useGroupChat = () => {
 
   // Fetch message history
   const fetchMessages = useCallback(async (limit: number = 50) => {
+    // Save current scroll position before fetching
+    const scrollContainer = document.querySelector('.chat-messages-container');
+    const savedScrollTop = scrollContainer?.scrollTop || 0;
+    const savedScrollHeight = scrollContainer?.scrollHeight || 0;
+    
     try {
       setLoading(true);
       
@@ -102,6 +107,26 @@ export const useGroupChat = () => {
       }));
 
       setMessages(transformedMessages);
+      
+      // Restore scroll position after state update
+      setTimeout(() => {
+        if (scrollContainer) {
+          // Calculate new scroll position based on content growth
+          const newScrollHeight = scrollContainer.scrollHeight;
+          const heightDifference = newScrollHeight - savedScrollHeight;
+          
+          // If we were at the bottom before, stay at the bottom
+          const wasAtBottom = savedScrollTop + scrollContainer.clientHeight >= savedScrollHeight - 50;
+          
+          if (wasAtBottom) {
+            scrollContainer.scrollTop = newScrollHeight;
+          } else {
+            // Preserve relative position by adjusting for new content
+            scrollContainer.scrollTop = savedScrollTop + heightDifference;
+          }
+        }
+      }, 0);
+      
       console.log('✅ Team Chat: Messages state updated with', transformedMessages.length, 'messages');
     } catch (err) {
       console.error('Error in fetchMessages:', err);
