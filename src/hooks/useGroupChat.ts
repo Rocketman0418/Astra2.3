@@ -20,7 +20,7 @@ export const useGroupChat = () => {
 
   // Parse @mentions from message content
   const parseMentions = useCallback((message: string): string[] => {
-    const mentionRegex = /@(\w+)/g;
+    const mentionRegex = /@([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)/g;
     const mentions: string[] = [];
     let match;
     while ((match = mentionRegex.exec(message)) !== null) {
@@ -120,7 +120,7 @@ export const useGroupChat = () => {
 
     const mentions = parseMentions(content);
     const userName = await getUserName();
-    const isAstraMention = mentions.includes('astra');
+    const isAstraMention = mentions.some(mention => mention.toLowerCase() === 'astra');
 
     try {
       // Log user message to astra_chats
@@ -148,7 +148,7 @@ export const useGroupChat = () => {
         
         try {
           // Extract the prompt after @astra
-          const astraPrompt = content.replace(/@astra\s*/i, '').trim();
+          const astraPrompt = content.replace(/@Astra\s*/i, '').trim();
           
           const response = await fetch(WEBHOOK_URL, {
             method: 'POST',
